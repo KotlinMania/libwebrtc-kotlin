@@ -166,6 +166,12 @@ kotlin {
 
                 // Byte buffer primitives (port of tokio-rs/bytes)
                 implementation("io.github.kotlinmania:bytes-kotlin:0.2.0")
+
+                // Upstream livekit-ffi/src/server/logger.rs, livekit-uniffi/src/log_forward.rs,
+                // libwebrtc/src/peer_connection.rs, webrtc-sys/src/jsep.rs, local_audio/src/*,
+                // local_video/src/{publisher,subscriber}.rs, mobile/src/lib.rs all
+                // `use log::*` (info, debug, warn, error, trace, LevelFilter, Log, Record).
+                implementation("io.github.kotlinmania:log-kotlin:0.1.1")
             }
         }
 
