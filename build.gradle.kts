@@ -57,7 +57,11 @@ kotlin {
         binaries.framework { baseName = "Libwebrtc"; xcf.add(this) }
     }
     iosSimulatorArm64 {
-        binaries.framework { baseName = "Libwebrtc"; xcf.add(this) }
+        binaries.framework {
+            baseName = "Libwebrtc"
+            isStatic = true
+            xcf.add(this)
+        }
     }
     iosX64 {
         binaries.framework { baseName = "Libwebrtc"; xcf.add(this) }
