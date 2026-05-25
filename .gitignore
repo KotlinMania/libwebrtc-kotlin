@@ -24,6 +24,7 @@ port_status_report.md
 high_priority_ports.md
 ast_distance_*.txt
 .cache/
+.local/
 *.lock
 kotlin-js-store/*
 !kotlin-js-store/package.json

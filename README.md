@@ -241,7 +241,7 @@ We'll first use it as a basis for our Unity SDK (under development), but over ti
 
 ```kotlin
 dependencies {
-    implementation("io.github.kotlinmania:libwebrtc-kotlin:0.1.0")
+    implementation("io.github.kotlinmania:libwebrtc-kotlin:0.1.1")
 }
 ```
 

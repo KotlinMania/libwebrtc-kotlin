@@ -6,10 +6,21 @@ on:
 permissions:
   contents: read
 
+env:
+  KOTLINMANIA_LOCAL_CACHE_DIR: ${{ github.workspace }}/.local
+  GRADLE_USER_HOME: ${{ github.workspace }}/.local/gradle/user-home
+  KONAN_DATA_DIR: ${{ github.workspace }}/.local/konan
+  HOME: ${{ github.workspace }}/.local/home
+  CFFIXED_USER_HOME: ${{ github.workspace }}/.local/home
+  TMPDIR: ${{ github.workspace }}/.local/tmp
+  GRADLE_OPTS: -Duser.home=${{ github.workspace }}/.local/gradle/home -Djava.io.tmpdir=${{ github.workspace }}/.local/tmp
+  CLANG_MODULE_CACHE_PATH: ${{ github.workspace }}/.local/xcode/clang-module-cache
+  KOTLINMANIA_REPO_ROOT: ${{ github.workspace }}
+
 jobs:
   build:
     name: Build and Test (Swift)
-    runs-on: macos-latest
+    runs-on: macos-26
     permissions:
       contents: read
     steps:
@@ -24,6 +35,42 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6.1.0
+
+      - name: Prepare local Swift and Xcode caches
+        run: |
+          mkdir -p \
+            "$HOME" \
+            "$TMPDIR" \
+            "$CLANG_MODULE_CACHE_PATH" \
+            "$KOTLINMANIA_LOCAL_CACHE_DIR/gradle/home" \
+            "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/cache" \
+            "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/config" \
+            "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/security" \
+            "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/scratch" \
+            "$KOTLINMANIA_LOCAL_CACHE_DIR/xcode/result-bundles" \
+            "${{ github.workspace }}/build/swift-tooling/bin" \
+            "${{ github.workspace }}/build/swift-test"
+
+          cat > "${{ github.workspace }}/build/swift-tooling/bin/xcodebuild" <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          repo_root="${KOTLINMANIA_REPO_ROOT:-$PWD}"
+          local_cache="${KOTLINMANIA_LOCAL_CACHE_DIR:-$repo_root/.local}"
+          result_bundle="$local_cache/xcode/result-bundles/swift-export-$$.xcresult"
+          exec /usr/bin/xcrun --no-cache xcodebuild -resultBundlePath "$result_bundle" "$@"
+          EOF
+
+          cat > "${{ github.workspace }}/build/swift-tooling/bin/swift" <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          exec /usr/bin/xcrun --no-cache swift "$@"
+          EOF
+
+          chmod +x \
+            "${{ github.workspace }}/build/swift-tooling/bin/xcodebuild" \
+            "${{ github.workspace }}/build/swift-tooling/bin/swift"
+
+          echo "${{ github.workspace }}/build/swift-tooling/bin" >> "$GITHUB_PATH"
 
       - name: Print Swift / Xcode versions
         run: |
@@ -69,7 +116,13 @@ jobs:
 
       - name: Run swift test against Kotlin-exported module
         working-directory: swift-test-harness
-        run: swift test
+        run: >
+          swift test
+          --cache-path "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/cache"
+          --config-path "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/config"
+          --security-path "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/security"
+          --scratch-path "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/scratch/harness"
+          --disable-sandbox
 
       - name: Upload Swift Export artifacts
         if: success() || failure()
