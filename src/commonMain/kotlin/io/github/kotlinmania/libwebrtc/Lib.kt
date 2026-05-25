@@ -1,4 +1,4 @@
-// port-lint: source src/lib.rs
+// port-lint: source lib.rs
 package io.github.kotlinmania.libwebrtc
 
 // Copyright 2025 LiveKit, Inc.
@@ -24,7 +24,7 @@ package io.github.kotlinmania.libwebrtc
 // lives in the parceled files below.
 //
 // Parceled per-symbol files in this package (same `// port-lint: source
-// src/lib.rs` provenance):
+// lib.rs` provenance):
 //
 //   MediaType     -> MediaType.kt
 //   RtcErrorType  -> RtcErrorType.kt

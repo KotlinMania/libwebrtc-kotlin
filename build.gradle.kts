@@ -597,8 +597,7 @@ val prepareSwiftExportLocalCache = tasks.register("prepareSwiftExportLocalCache"
     onlyIf { System.getProperty("os.name").lowercase().contains("mac") }
 
     val swiftToolingBin = layout.buildDirectory.dir("swift-tooling/bin")
-    outputs.dir(kotlinmaniaLocalCacheDir)
-    outputs.dir(swiftToolingBin)
+    outputs.upToDateWhen { false }
 
     doLast {
         listOf(
