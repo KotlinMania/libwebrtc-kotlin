@@ -1,4 +1,3 @@
-// port-lint: ignore
 package io.github.kotlinmania.libwebrtc
 
 import kotlin.test.Test
@@ -32,6 +31,32 @@ class LibTest {
         assertEquals(RtcErrorType.InvalidSdp, e.errorType)
         assertEquals("could not parse offer", e.rtcMessage)
         assertEquals("an RtcError occured: InvalidSdp - could not parse offer", e.message)
+    }
+
+    @Test
+    fun audioFrameOwnedConstructorZeroFillsForChannelTimesSamples() {
+        val frame = AudioFrame(
+            sampleRate = 48_000u,
+            numChannels = 2u,
+            samplesPerChannel = 480u,
+        )
+        assertEquals(48_000u, frame.sampleRate)
+        assertEquals(2u, frame.numChannels)
+        assertEquals(480u, frame.samplesPerChannel)
+        assertEquals(960, frame.data.size)
+        assertTrue(frame.data.all { it == 0.toShort() })
+    }
+
+    @Test
+    fun audioFrameDirectConstructorPreservesProvidedSamples() {
+        val samples = shortArrayOf(1, 2, 3, 4)
+        val frame = AudioFrame(
+            data = samples,
+            sampleRate = 16_000u,
+            numChannels = 1u,
+            samplesPerChannel = 4u,
+        )
+        assertEquals(samples, frame.data)
     }
 
     @Test
