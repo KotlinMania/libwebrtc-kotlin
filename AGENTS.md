@@ -7,14 +7,19 @@ the long trail of recovered field-feedback into one place. **When this file
 disagrees with anything you remember, this file wins.**
 
 > **Source-of-truth.** The workspace-root `AGENTS.md` (at
-> `/Volumes/stuff/Projects/kotlinmania/AGENTS.md`) is canonical. The
-> workspace-root `CLAUDE.md` *at that same path* is a symlink to it —
-> this is a workspace-root convenience for tools that look up either
-> filename. **The symlink lives only at the workspace root.** Inside
-> each `*-kotlin/` repo there is no `CLAUDE.md` at all: per-repo
-> `CLAUDE.md` files were removed via `git rm` on 2026-05-24 and must
-> stay removed. Do not recreate them. Do not symlink them. Do not
-> mirror the workspace-root symlink pattern inside a repo.
+> `/Volumes/stuff/Projects/kotlinmania/AGENTS.md`) is canonical.
+> Workspace-root `CLAUDE.md` is a tiny redirect file pointing here
+> (plain text — **never a symlink**: this workspace is Kotlin
+> Multiplatform and Windows is a first-class target, and Windows git
+> does not handle symlinks reliably). Inside each `*-kotlin/` repo
+> there is no `CLAUDE.md` at all: per-repo `CLAUDE.md` files were
+> removed via `git rm` on 2026-05-24 and must stay removed.
+>
+> **No symlinks anywhere in this workspace.** Not at the workspace
+> root, not in any repo, not under any subdirectory. If you find one,
+> replace it with the file it points to (real content) and commit the
+> replacement. Symlinks check out as the literal symlink content on
+> Windows runners — they break KMP builds in opaque ways.
 >
 > As of 2026-05-24 every `*-kotlin/AGENTS.md` is a copy of this file
 > (blasted out so the next agent in any repo reads the same rules).
