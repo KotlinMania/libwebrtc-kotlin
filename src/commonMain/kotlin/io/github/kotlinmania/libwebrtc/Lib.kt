@@ -15,70 +15,65 @@ package io.github.kotlinmania.libwebrtc
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Ledger for upstream src/lib.rs. The file in upstream Rust carries real
-// declarations alongside a long list of `pub mod` lines and target-gated
+// Ledger for upstream lib.rs. The file in upstream Rust carries real
+// declarations alongside a long list of module lines and target-gated
 // re-export blocks; per workspace policy a Kotlin source file may not bridge
-// re-exports via central typealiases, and a lib.rs that mixes real code with
+// re-exports via central typealiases, and a module root that mixes real code with
 // module declarations is parceled into per-symbol Kotlin files. This file
 // records the upstream order and the migration ledger; the implementation
 // lives in the parceled files below.
 //
-// Parceled per-symbol files in this package (same `// port-lint: source
-// lib.rs` provenance):
+// Parceled per-symbol files in this package share the lib.rs provenance:
 //
 //   MediaType     -> MediaType.kt
 //   RtcErrorType  -> RtcErrorType.kt
 //   RtcError      -> RtcError.kt
 //
-// Upstream selects the backing implementation by target arch:
-//   #[cfg_attr(target_arch = "wasm32", path = "web/mod.rs")]
-//   #[cfg_attr(not(target_arch = "wasm32"), path = "native/mod.rs")]
-//   mod imp;
+// Upstream selects the backing implementation by platform: WebAssembly uses
+// the web implementation module, and all other targets use the native
+// implementation module.
 // In Kotlin Multiplatform this split is expressed as expect/actual per
 // source set, not as a single inner module alias.
 //
-// Upstream submodule declarations follow. Each will be ported as its own
-// Kotlin file in this package, so the per-module `pub mod` lines below do
+// Upstream submodule declarations follow in source order. Each will be ported
+// as its own Kotlin file in this package, so the per-module declarations do
 // not require a Kotlin counterpart of their own.
-//   pub mod audio_frame;
-//   pub mod audio_source;
-//   pub mod audio_stream;
-//   pub mod audio_track;
-//   pub mod data_channel;
-//   #[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
-//   pub mod desktop_capturer;
-//   pub mod ice_candidate;
-//   pub mod media_stream;
-//   pub mod media_stream_track;
-//   pub mod peer_connection;
-//   pub mod peer_connection_factory;
-//   pub mod prelude;
-//   pub mod rtp_parameters;
-//   pub mod rtp_receiver;
-//   pub mod rtp_sender;
-//   pub mod rtp_transceiver;
-//   pub mod session_description;
-//   pub mod stats;
-//   pub mod video_frame;
-//   pub mod video_source;
-//   pub mod video_stream;
-//   pub mod video_track;
+//   AudioFrame
+//   AudioSource
+//   AudioStream
+//   AudioTrack
+//   DataChannel
+//   DesktopCapturer (macOS, Windows, and Linux)
+//   IceCandidate
+//   MediaStream
+//   MediaStreamTrack
+//   PeerConnection
+//   PeerConnectionFactory
+//   Prelude
+//   RtpParameters
+//   RtpReceiver
+//   RtpSender
+//   RtpTransceiver
+//   SessionDescription
+//   Stats
+//   VideoFrame
+//   VideoSource
+//   VideoStream
+//   VideoTrack
 //
 // Upstream non-wasm re-exports that surface native-only symbols:
-//   #[cfg(not(target_arch = "wasm32"))]
-//   pub mod native {
-//       pub use webrtc_sys::webrtc::ffi::create_random_uuid;
-//       pub use crate::imp::{apm, audio_mixer, audio_resampler, frame_cryptor, yuv_helper};
-//   }
+//   NativeCreateRandomUuid
+//   NativeApm
+//   NativeAudioMixer
+//   NativeAudioResampler
+//   NativeFrameCryptor
+//   NativeYuvHelper
 // Per the libwebrtc-kotlin re-export workflow, these will be migrated to
 // direct references at the call site (no central typealias). This file
 // remains the ledger when callers begin to land.
 //
 // Upstream Android-only re-exports:
-//   #[cfg(target_os = "android")]
-//   pub mod android {
-//       pub use crate::imp::android::*;
-//   }
+//   android implementation symbols
 // Same migration rule: callers reference the original symbol; no central
 // typealias.
 //

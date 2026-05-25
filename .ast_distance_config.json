@@ -2,7 +2,7 @@
   "type": "port",
   "name": "libwebrtc-kotlin",
   "source": {
-    "path": "tmp/libwebrtc/src",
+    "path": "tmp/libwebrtc/libwebrtc/src",
     "lang": "rust"
   },
   "target": {
