@@ -13,7 +13,7 @@ env:
   HOME: ${{ github.workspace }}/.local/home
   CFFIXED_USER_HOME: ${{ github.workspace }}/.local/home
   TMPDIR: ${{ github.workspace }}/.local/tmp
-  GRADLE_OPTS: -Duser.home=${{ github.workspace }}/.local/gradle/home -Djava.io.tmpdir=${{ github.workspace }}/.local/tmp
+  GRADLE_OPTS: -Duser.home=${{ github.workspace }}/.local/gradle/home -Djava.io.tmpdir=${{ github.workspace }}/.local/tmp -Dkotlin.data.dir=${{ github.workspace }}/.local/konan -Dkonan.data.dir=${{ github.workspace }}/.local/konan
   CLANG_MODULE_CACHE_PATH: ${{ github.workspace }}/.local/xcode/clang-module-cache
   KOTLINMANIA_REPO_ROOT: ${{ github.workspace }}
 
@@ -112,7 +112,12 @@ jobs:
           FRAMEWORKS_FOLDER_PATH: Frameworks
           MACOSX_DEPLOYMENT_TARGET: "14.0"
           DEPLOYMENT_TARGET_SETTING_NAME: MACOSX_DEPLOYMENT_TARGET
-        run: ./gradlew embedSwiftExportForXcode --no-configuration-cache
+        run: >
+          ./gradlew embedSwiftExportForXcode
+          -Pkotlin.data.dir="$KOTLINMANIA_LOCAL_CACHE_DIR/konan"
+          -Pkonan.data.dir="$KOTLINMANIA_LOCAL_CACHE_DIR/konan"
+          --rerun-tasks
+          --no-configuration-cache
 
       - name: Run swift test against Kotlin-exported module
         working-directory: swift-test-harness

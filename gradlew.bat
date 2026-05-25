@@ -35,6 +35,16 @@ set APP_HOME=%DIRNAME%
 @rem Resolve any "." and ".." in APP_HOME to make it shorter.
 for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
 
+if not defined KOTLINMANIA_LOCAL_CACHE_DIR set "KOTLINMANIA_LOCAL_CACHE_DIR=%APP_HOME%\.local"
+if not defined GRADLE_USER_HOME set "GRADLE_USER_HOME=%KOTLINMANIA_LOCAL_CACHE_DIR%\gradle\user-home"
+if not defined KONAN_DATA_DIR set "KONAN_DATA_DIR=%KOTLINMANIA_LOCAL_CACHE_DIR%\konan"
+if not defined TMPDIR set "TMPDIR=%KOTLINMANIA_LOCAL_CACHE_DIR%\tmp"
+if not exist "%GRADLE_USER_HOME%" mkdir "%GRADLE_USER_HOME%"
+if not exist "%KOTLINMANIA_LOCAL_CACHE_DIR%\gradle\home" mkdir "%KOTLINMANIA_LOCAL_CACHE_DIR%\gradle\home"
+if not exist "%KONAN_DATA_DIR%" mkdir "%KONAN_DATA_DIR%"
+if not exist "%TMPDIR%" mkdir "%TMPDIR%"
+set "GRADLE_OPTS=-Dkotlin.data.dir=%KONAN_DATA_DIR% -Dkonan.data.dir=%KONAN_DATA_DIR% -Djava.io.tmpdir=%TMPDIR% %GRADLE_OPTS%"
+
 @rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
 set DEFAULT_JVM_OPTS="-Xmx64m" "-Xms64m"
 

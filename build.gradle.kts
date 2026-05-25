@@ -12,6 +12,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.kotlin.dsl.support.serviceOf
 import org.gradle.process.ExecOperations
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec
@@ -72,6 +73,32 @@ fun sdkManagerCommand(vararg args: String): List<String> =
 fun localCachePath(vararg parts: String): String =
     parts.fold(kotlinmaniaLocalCacheDir) { parent, child -> parent.resolve(child) }.absolutePath
 
+val projectKonanDataDir = localCachePath("konan")
+
+System.setProperty("konan.data.dir", projectKonanDataDir)
+System.setProperty("kotlin.data.dir", projectKonanDataDir)
+extensions.extraProperties["konan.data.dir"] = projectKonanDataDir
+extensions.extraProperties["kotlin.data.dir"] = projectKonanDataDir
+
+fun prepareProjectLocalCacheDirs() {
+    listOf(
+        kotlinmaniaLocalCacheDir,
+        kotlinmaniaLocalCacheDir.resolve("home"),
+        kotlinmaniaLocalCacheDir.resolve("tmp"),
+        kotlinmaniaLocalCacheDir.resolve("gradle/home"),
+        kotlinmaniaLocalCacheDir.resolve("gradle/user-home"),
+        kotlinmaniaLocalCacheDir.resolve("konan"),
+        kotlinmaniaLocalCacheDir.resolve("swiftpm/cache"),
+        kotlinmaniaLocalCacheDir.resolve("swiftpm/config"),
+        kotlinmaniaLocalCacheDir.resolve("swiftpm/security"),
+        kotlinmaniaLocalCacheDir.resolve("swiftpm/scratch"),
+        kotlinmaniaLocalCacheDir.resolve("xcode/clang-module-cache"),
+        kotlinmaniaLocalCacheDir.resolve("xcode/result-bundles"),
+    ).forEach { it.mkdirs() }
+}
+
+prepareProjectLocalCacheDirs()
+
 fun swiftExportLocalEnvironment(swiftToolingBin: File): Map<String, String> {
     val localCache = kotlinmaniaLocalCacheDir.absolutePath
     val localTemp = localCachePath("tmp")
@@ -85,11 +112,11 @@ fun swiftExportLocalEnvironment(swiftToolingBin: File): Map<String, String> {
         "KOTLINMANIA_REPO_ROOT" to projectDir.absolutePath,
         "KOTLINMANIA_LOCAL_CACHE_DIR" to localCache,
         "GRADLE_USER_HOME" to localCachePath("gradle", "user-home"),
-        "KONAN_DATA_DIR" to localCachePath("konan"),
+        "KONAN_DATA_DIR" to projectKonanDataDir,
         "HOME" to localHome,
         "CFFIXED_USER_HOME" to localHome,
         "TMPDIR" to localTemp,
-        "GRADLE_OPTS" to "-Duser.home=${localCachePath("gradle", "home")} -Djava.io.tmpdir=$localTemp",
+        "GRADLE_OPTS" to "-Duser.home=${localCachePath("gradle", "home")} -Djava.io.tmpdir=$localTemp -Dkotlin.data.dir=$projectKonanDataDir -Dkonan.data.dir=$projectKonanDataDir",
         "CLANG_MODULE_CACHE_PATH" to localCachePath("xcode", "clang-module-cache"),
         "PATH" to pathValue,
     )
@@ -235,6 +262,17 @@ kotlin {
     compilerOptions {
         allWarningsAsErrors.set(true)
         freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
+    targets.withType<KotlinNativeTarget>().configureEach {
+        compilations.configureEach {
+            compileTaskProvider.configure {
+                compilerOptions {
+                    freeCompilerArgs.add("-Xkonan-data-dir=$projectKonanDataDir")
+                    freeCompilerArgs.add("-Xtemporary-files-dir=${localCachePath("tmp")}")
+                }
+            }
+        }
     }
 
     val xcf = XCFramework("Libwebrtc")
@@ -657,6 +695,9 @@ val swiftExportPackageForLocalTest = tasks.register<Exec>("swiftExportPackageFor
     commandLine(
         layout.projectDirectory.file(if (isWindowsHost) "gradlew.bat" else "gradlew").asFile.absolutePath,
         "embedSwiftExportForXcode",
+        "-Pkotlin.data.dir=$projectKonanDataDir",
+        "-Pkonan.data.dir=$projectKonanDataDir",
+        "--rerun-tasks",
         "--no-configuration-cache",
         "--no-daemon",
         "--console=plain",
