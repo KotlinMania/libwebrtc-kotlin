@@ -6,20 +6,20 @@ on:
 permissions:
   contents: read
 
-env:
-  KOTLINMANIA_LOCAL_CACHE_DIR: ${{ github.workspace }}/.local
-  GRADLE_USER_HOME: ${{ github.workspace }}/.local/gradle/user-home
-  KONAN_DATA_DIR: ${{ github.workspace }}/.local/konan
-  HOME: ${{ github.workspace }}/.local/home
-  CFFIXED_USER_HOME: ${{ github.workspace }}/.local/home
-  TMPDIR: ${{ github.workspace }}/.local/tmp
-  GRADLE_OPTS: -Duser.home=${{ github.workspace }}/.local/gradle/home -Djava.io.tmpdir=${{ github.workspace }}/.local/tmp -Dkotlin.data.dir=${{ github.workspace }}/.local/konan -Dkonan.data.dir=${{ github.workspace }}/.local/konan
-  CLANG_MODULE_CACHE_PATH: ${{ github.workspace }}/.local/xcode/clang-module-cache
-  KOTLINMANIA_REPO_ROOT: ${{ github.workspace }}
-
 jobs:
   build:
     name: Build and Test (Swift)
+    # The Kotlin/Native 2.3.x distribution ships prebuilt platform caches
+    # (liborg.jetbrains.kotlin.native.platform.{CoreFoundation,Foundation,darwin}-cache.a)
+    # that reference macOS 26 / iOS 26 SDK symbols — NSCalendarIdentifierVikram,
+    # NSURLUbiquitousItemSupportedSyncControlsKey, mach_vm_reclaim_update_kernel_accounting_trap,
+    # xpc_session_set_peer_requirement, etc. macos-latest currently resolves to
+    # macos-15 (Xcode 16 SDK) and `swift test` link fails with "Undefined symbols
+    # for architecture arm64" on every one of those when the repo's Kotlin code
+    # reaches into Foundation / CoreFoundation / darwin platform APIs. Pin
+    # macos-26 uniformly so the SDK in
+    # /Applications/Xcode_26.x.app/Contents/Developer/Platforms provides the
+    # symbol stubs the cache expects.
     runs-on: macos-26
     permissions:
       contents: read
@@ -36,42 +36,14 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6.1.0
 
-      - name: Prepare local Swift and Xcode caches
-        run: |
-          mkdir -p \
-            "$HOME" \
-            "$TMPDIR" \
-            "$CLANG_MODULE_CACHE_PATH" \
-            "$KOTLINMANIA_LOCAL_CACHE_DIR/gradle/home" \
-            "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/cache" \
-            "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/config" \
-            "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/security" \
-            "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/scratch" \
-            "$KOTLINMANIA_LOCAL_CACHE_DIR/xcode/result-bundles" \
-            "${{ github.workspace }}/build/swift-tooling/bin" \
-            "${{ github.workspace }}/build/swift-test"
-
-          cat > "${{ github.workspace }}/build/swift-tooling/bin/xcodebuild" <<'EOF'
-          #!/usr/bin/env bash
-          set -euo pipefail
-          repo_root="${KOTLINMANIA_REPO_ROOT:-$PWD}"
-          local_cache="${KOTLINMANIA_LOCAL_CACHE_DIR:-$repo_root/.local}"
-          result_bundle="$local_cache/xcode/result-bundles/swift-export-$$.xcresult"
-          exec /usr/bin/xcrun --no-cache xcodebuild -resultBundlePath "$result_bundle" "$@"
-          EOF
-
-          cat > "${{ github.workspace }}/build/swift-tooling/bin/swift" <<'EOF'
-          #!/usr/bin/env bash
-          set -euo pipefail
-          exec /usr/bin/xcrun --no-cache swift "$@"
-          EOF
-
-          chmod +x \
-            "${{ github.workspace }}/build/swift-tooling/bin/xcodebuild" \
-            "${{ github.workspace }}/build/swift-tooling/bin/swift"
-
-          echo "${{ github.workspace }}/build/swift-tooling/bin" >> "$GITHUB_PATH"
-
+      # NOTE: do NOT add a `maxim-lobanov/setup-xcode` step here.
+      # KotlinMania's enterprise GitHub Actions policy does not whitelist
+      # third-party actions; a workflow that references one returns
+      # startup_failure with zero jobs spawned. The macos-26 image's default
+      # Xcode is already in the 26.x line (currently 26.4.1) and supplies the
+      # macOS 26 SDK symbols the Kotlin/Native 2.3.x platform caches expect.
+      # A working run prints "Target: arm64-apple-macosx26.0" from
+      # `swift --version` straight off the image default.
       - name: Print Swift / Xcode versions
         run: |
           swift --version
@@ -97,10 +69,11 @@ jobs:
       #     configured value`.
       #
       # Output lands in `build/swift-test/`:
-      #   * `libLibwebrtc.a` — the merged static archive containing
-      #     every `@ExportedBridge`-annotated function emitted by
-      #     `build/SwiftExport/macosArm64/Debug/**/*.kt`.
-      #   * Four `.swiftmodule/` directories: Libwebrtc,
+      #   * `lib<Module>.a` — the merged static archive containing every
+      #     `@ExportedBridge`-annotated function emitted by
+      #     `build/SwiftExport/macosArm64/Debug/**/*.kt`. `<Module>` is the
+      #     repo's `project.frameworkName` (the Swift Export module name).
+      #   * Four `.swiftmodule/` directories: <Module>,
       #     KotlinRuntimeSupport, ExportedKotlinPackages, KotlinRuntime.
       - name: Build Swift Export package
         env:
@@ -112,22 +85,30 @@ jobs:
           FRAMEWORKS_FOLDER_PATH: Frameworks
           MACOSX_DEPLOYMENT_TARGET: "14.0"
           DEPLOYMENT_TARGET_SETTING_NAME: MACOSX_DEPLOYMENT_TARGET
-        run: >
-          ./gradlew embedSwiftExportForXcode
-          -Pkotlin.data.dir="$KOTLINMANIA_LOCAL_CACHE_DIR/konan"
-          -Pkonan.data.dir="$KOTLINMANIA_LOCAL_CACHE_DIR/konan"
-          --rerun-tasks
-          --no-configuration-cache
+        run: ./gradlew embedSwiftExportForXcode --no-configuration-cache
+
+      - name: Set Swift package macOS platform
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          package = Path("build/SPMPackage/macosArm64/Debug/Package.swift")
+          text = package.read_text()
+          if "platforms:" not in text:
+              package.write_text(
+                  re.sub(
+                      r'(name:\s*"[^"]*",)',
+                      r'\1\n    platforms: [.macOS(.v14)],',
+                      text,
+                      count=1,
+                  )
+              )
+          PY
 
       - name: Run swift test against Kotlin-exported module
         working-directory: swift-test-harness
-        run: >
-          swift test
-          --cache-path "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/cache"
-          --config-path "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/config"
-          --security-path "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/security"
-          --scratch-path "$KOTLINMANIA_LOCAL_CACHE_DIR/swiftpm/scratch/harness"
-          --disable-sandbox
+        run: swift test
 
       - name: Upload Swift Export artifacts
         if: success() || failure()
@@ -135,7 +116,7 @@ jobs:
         with:
           name: swift-export-artifacts
           path: |
-            build/swift-test/libLibwebrtc.a
+            build/swift-test/lib*.a
             build/swift-test/*.swiftmodule/
             build/SPMPackage/macosArm64/Debug/
           retention-days: 7
