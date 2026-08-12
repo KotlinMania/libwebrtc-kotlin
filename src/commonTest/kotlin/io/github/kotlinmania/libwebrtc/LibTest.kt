@@ -35,11 +35,12 @@ class LibTest {
 
     @Test
     fun audioFrameOwnedConstructorZeroFillsForChannelTimesSamples() {
-        val frame = AudioFrame(
-            sampleRate = 48_000u,
-            numChannels = 2u,
-            samplesPerChannel = 480u,
-        )
+        val frame =
+            AudioFrame(
+                sampleRate = 48_000u,
+                numChannels = 2u,
+                samplesPerChannel = 480u,
+            )
         assertEquals(48_000u, frame.sampleRate)
         assertEquals(2u, frame.numChannels)
         assertEquals(480u, frame.samplesPerChannel)
@@ -50,23 +51,25 @@ class LibTest {
     @Test
     fun audioFrameDirectConstructorPreservesProvidedSamples() {
         val samples = shortArrayOf(1, 2, 3, 4)
-        val frame = AudioFrame(
-            data = samples,
-            sampleRate = 16_000u,
-            numChannels = 1u,
-            samplesPerChannel = 4u,
-        )
+        val frame =
+            AudioFrame(
+                data = samples,
+                sampleRate = 16_000u,
+                numChannels = 1u,
+                samplesPerChannel = 4u,
+            )
         assertEquals(samples, frame.data)
     }
 
     @Test
     fun rtcErrorIsAThrowable() {
         val e = RtcError(RtcErrorType.Internal, "boom")
-        val caught: Throwable = try {
-            throw e
-        } catch (t: Throwable) {
-            t
-        }
+        val caught: Throwable =
+            try {
+                throw e
+            } catch (t: Throwable) {
+                t
+            }
         assertNotNull(caught.message)
         assertTrue(caught is RtcError)
         assertEquals(RtcErrorType.Internal, caught.errorType)
