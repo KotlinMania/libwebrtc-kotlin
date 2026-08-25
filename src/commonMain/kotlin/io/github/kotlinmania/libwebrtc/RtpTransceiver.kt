@@ -14,3 +14,20 @@ public class RtpTransceiverInit(
     public val streamIds: List<String> = emptyList(),
     public val sendEncodings: List<RtpEncodingParameters> = emptyList(),
 )
+
+public class RtpTransceiver(
+    private val senderInstance: RtpSender = RtpSender(),
+    private val receiverInstance: RtpReceiver = RtpReceiver(),
+    private var transceiverDirection: RtpTransceiverDirection = RtpTransceiverDirection.SendRecv,
+    private var transceiverMid: String? = null,
+) {
+    public fun mid(): String? = transceiverMid
+    public fun direction(): RtpTransceiverDirection = transceiverDirection
+    public fun currentDirection(): RtpTransceiverDirection? = transceiverDirection
+    public fun sender(): RtpSender = senderInstance
+    public fun receiver(): RtpReceiver = receiverInstance
+
+    public fun stop() {
+        transceiverDirection = RtpTransceiverDirection.Stopped
+    }
+}
