@@ -79,3 +79,5 @@ package io.github.kotlinmania.libwebrtc
 //
 // Callers migrated:
 //   (none yet)
+
+public object Lib
