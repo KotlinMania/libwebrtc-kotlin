@@ -154,4 +154,105 @@ class LibTest {
         assertEquals(3, buf.data.size)
         assertTrue(buf.binary)
     }
+
+    @Test
+    fun videoFrameAndBuffer() {
+        val i420 = I420Buffer(
+            width = 640,
+            height = 480,
+            dataY = ByteArray(640 * 480),
+            strideY = 640,
+            dataU = ByteArray(320 * 240),
+            strideU = 320,
+            dataV = ByteArray(320 * 240),
+            strideV = 320,
+        )
+        val frame = VideoFrame(
+            rotation = VideoRotation.VideoRotation90,
+            timestampUs = 1000L,
+            buffer = i420,
+        )
+        assertEquals(VideoRotation.VideoRotation90, frame.rotation)
+        assertEquals(1000L, frame.timestampUs)
+        assertEquals(640, frame.buffer.width)
+        assertEquals(480, frame.buffer.height)
+        assertEquals(VideoBufferType.I420, frame.buffer.type)
+        assertEquals(i420, frame.buffer.toI420())
+    }
+
+    @Test
+    fun mediaStreamAndTracks() {
+        val audioTrack = RtcAudioTrack("audio-1")
+        val videoTrack = RtcVideoTrack("video-1")
+
+        assertEquals("audio", audioTrack.kind)
+        assertEquals(true, audioTrack.enabled)
+        audioTrack.setEnabled(false)
+        assertEquals(false, audioTrack.enabled)
+
+        val stream = MediaStream("stream-1")
+        stream.addTrack(audioTrack)
+        stream.addTrack(videoTrack)
+        assertEquals(1, stream.audioTracks().size)
+        assertEquals(1, stream.videoTracks().size)
+        assertEquals("audio-1", stream.audioTracks().first().id)
+        assertEquals("video-1", stream.videoTracks().first().id)
+    }
+
+    @Test
+    fun peerConnectionWorkflow() {
+        val factory = PeerConnectionFactory.withPlatformAdm()
+        val pc = factory.createPeerConnection()
+        assertEquals(PeerConnectionState.New, pc.connectionState())
+        assertEquals(SignalingState.Stable, pc.signalingState())
+
+        val sdp = "v=0\r\no=- 12345 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n"
+        val offer = SessionDescription.parse(sdp, SdpType.Offer)
+        pc.setLocalDescription(offer)
+        assertEquals(SignalingState.HaveLocalOffer, pc.signalingState())
+
+        val answer = SessionDescription.parse(sdp, SdpType.Answer)
+        pc.setRemoteDescription(answer)
+        assertEquals(SignalingState.Stable, pc.signalingState())
+
+        val track = factory.createAudioTrack("track-1")
+        val sender = pc.addTrack(track)
+        assertEquals(1, pc.senders().size)
+        assertEquals("track-1", sender.track()?.id)
+
+        val dc = pc.createDataChannel("chat")
+        assertEquals("chat", dc.label)
+
+        pc.close()
+        assertEquals(PeerConnectionState.Closed, pc.connectionState())
+    }
+
+    @Test
+    fun rtcStatsVariants() {
+        val codec = RtcStats.Codec(
+            id = "codec-1",
+            timestampUs = 123456L,
+            payloadType = 111,
+            mimeType = "audio/opus",
+            clockRate = 48000L,
+            channels = 2,
+        )
+        assertEquals("codec-1", codec.id)
+        assertEquals("audio/opus", codec.mimeType)
+
+        val dataChannelStat = RtcStats.DataChannel(
+            id = "dc-1",
+            timestampUs = 123456L,
+            label = "data",
+            protocol = "",
+            dataChannelIdentifier = 1,
+            state = DataChannelState.Open,
+            messagesSent = 10,
+            bytesSent = 100,
+            messagesReceived = 5,
+            bytesReceived = 50,
+        )
+        assertEquals(DataChannelState.Open, dataChannelStat.state)
+        assertEquals(10L, dataChannelStat.messagesSent)
+    }
 }

@@ -29,3 +29,25 @@ public sealed class DataChannelException(message: String) : RuntimeException(mes
     public class Utf8Error(message: String = "only utf8 strings can be sent") :
         DataChannelException(message)
 }
+
+public class DataChannel(
+    public val label: String,
+    public val init: DataChannelInit = DataChannelInit(),
+) {
+    private var channelState: DataChannelState = DataChannelState.Connecting
+    private var bufferAmount: Long = 0L
+
+    public fun id(): Int = init.id
+    public fun state(): DataChannelState = channelState
+    public fun bufferedAmount(): Long = bufferAmount
+
+    public fun send(data: ByteArray, binary: Boolean = true) {
+        if (channelState != DataChannelState.Open) {
+            throw DataChannelException.SendError()
+        }
+    }
+
+    public fun close() {
+        channelState = DataChannelState.Closed
+    }
+}
