@@ -46,7 +46,9 @@ class LibTest {
         assertEquals(2u, frame.numChannels)
         assertEquals(480u, frame.samplesPerChannel)
         assertEquals(960, frame.data.size)
-        assertTrue(frame.data.all { it == 0.toShort() })
+        for (sample in frame.data) {
+            assertEquals(0.toShort(), sample)
+        }
     }
 
     @Test
