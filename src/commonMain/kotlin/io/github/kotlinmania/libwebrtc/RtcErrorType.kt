@@ -1,4 +1,4 @@
-// port-lint: source libwebrtc/libwebrtc/src/lib.rs
+// port-lint: source lib.rs
 package io.github.kotlinmania.libwebrtc
 
 public enum class RtcErrorType {

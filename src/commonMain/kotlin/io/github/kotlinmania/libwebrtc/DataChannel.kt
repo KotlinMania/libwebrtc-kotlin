@@ -1,4 +1,4 @@
-// port-lint: source libwebrtc/libwebrtc/src/data_channel.rs
+// port-lint: source data_channel.rs
 package io.github.kotlinmania.libwebrtc
 
 public enum class DataChannelState {
