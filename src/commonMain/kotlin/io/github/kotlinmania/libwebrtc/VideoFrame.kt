@@ -1,4 +1,4 @@
-// port-lint: source libwebrtc/libwebrtc/src/video_frame.rs
+// port-lint: source video_frame.rs
 package io.github.kotlinmania.libwebrtc
 
 public enum class VideoRotation(public val degrees: Int) {

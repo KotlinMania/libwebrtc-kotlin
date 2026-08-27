@@ -1,4 +1,4 @@
-// port-lint: source libwebrtc/libwebrtc/src/rtp_receiver.rs
+// port-lint: source rtp_receiver.rs
 package io.github.kotlinmania.libwebrtc
 
 public class RtpReceiver(
