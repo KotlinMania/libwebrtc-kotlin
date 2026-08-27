@@ -1,4 +1,4 @@
-// port-lint: source session_description.rs
+// port-lint: source libwebrtc/libwebrtc/src/session_description.rs
 package io.github.kotlinmania.libwebrtc
 
 public enum class SdpType(public val value: String) {
