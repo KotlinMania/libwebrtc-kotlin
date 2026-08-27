@@ -23,11 +23,16 @@ public class DataBuffer(
     public val binary: Boolean,
 )
 
-public sealed class DataChannelException(message: String) : RuntimeException(message) {
-    public class SendError(message: String = "failed to send data, dc not open? send buffer is full ?") :
-        DataChannelException(message)
-    public class Utf8Error(message: String = "only utf8 strings can be sent") :
-        DataChannelException(message)
+public sealed class DataChannelException(
+    message: String,
+) : RuntimeException(message) {
+    public class SendError(
+        message: String = "failed to send data, dc not open? send buffer is full ?",
+    ) : DataChannelException(message)
+
+    public class Utf8Error(
+        message: String = "only utf8 strings can be sent",
+    ) : DataChannelException(message)
 }
 
 public class DataChannel(
@@ -38,7 +43,9 @@ public class DataChannel(
     private var bufferAmount: Long = 0L
 
     public fun id(): Int = init.id
+
     public fun state(): DataChannelState = channelState
+
     public fun bufferedAmount(): Long = bufferAmount
 
     public fun send(data: ByteArray, binary: Boolean = true) {

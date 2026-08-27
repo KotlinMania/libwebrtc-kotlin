@@ -28,17 +28,11 @@ public class PeerConnectionFactory {
     public fun createPeerConnection(
         config: RtcConfiguration = RtcConfiguration(),
         observer: PeerConnectionObserver? = null,
-    ): PeerConnection {
-        return PeerConnection(config, observer)
-    }
+    ): PeerConnection = PeerConnection(config, observer)
 
-    public fun createAudioTrack(id: String): RtcAudioTrack {
-        return RtcAudioTrack(id)
-    }
+    public fun createAudioTrack(id: String): RtcAudioTrack = RtcAudioTrack(id)
 
-    public fun createVideoTrack(id: String): RtcVideoTrack {
-        return RtcVideoTrack(id)
-    }
+    public fun createVideoTrack(id: String): RtcVideoTrack = RtcVideoTrack(id)
 
     public companion object {
         public fun withPlatformAdm(): PeerConnectionFactory = PeerConnectionFactory()

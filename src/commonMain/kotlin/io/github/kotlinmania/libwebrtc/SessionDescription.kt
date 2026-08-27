@@ -1,20 +1,24 @@
 // port-lint: source session_description.rs
 package io.github.kotlinmania.libwebrtc
 
-public enum class SdpType(public val value: String) {
+public enum class SdpType(
+    public val value: String,
+) {
     Offer("offer"),
     PrAnswer("pranswer"),
     Answer("answer"),
-    Rollback("rollback");
+    Rollback("rollback"),
+    ;
 
     public companion object {
-        public fun fromString(sdpType: String): SdpType = when (sdpType.lowercase()) {
-            "offer" -> Offer
-            "pranswer" -> PrAnswer
-            "answer" -> Answer
-            "rollback" -> Rollback
-            else -> throw IllegalArgumentException("invalid SdpType: $sdpType")
-        }
+        public fun fromString(sdpType: String): SdpType =
+            when (sdpType.lowercase()) {
+                "offer" -> Offer
+                "pranswer" -> PrAnswer
+                "answer" -> Answer
+                "rollback" -> Rollback
+                else -> throw IllegalArgumentException("invalid SdpType: $sdpType")
+            }
     }
 }
 
