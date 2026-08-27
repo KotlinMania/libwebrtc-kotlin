@@ -61,13 +61,21 @@ public data class TrackEvent(
 
 public interface PeerConnectionObserver {
     public fun onConnectionChange(state: PeerConnectionState) {}
+
     public fun onDataChannel(dataChannel: DataChannel) {}
+
     public fun onIceCandidate(candidate: IceCandidate) {}
+
     public fun onIceCandidateError(error: IceCandidateError) {}
+
     public fun onIceConnectionChange(state: IceConnectionState) {}
+
     public fun onIceGatheringChange(state: IceGatheringState) {}
+
     public fun onNegotiationNeeded() {}
+
     public fun onSignalingChange(state: SignalingState) {}
+
     public fun onTrack(event: TrackEvent) {}
 }
 
@@ -87,31 +95,38 @@ public class PeerConnection(
     private val transceiversList = mutableListOf<RtpTransceiver>()
 
     public fun connectionState(): PeerConnectionState = connectionState
+
     public fun iceConnectionState(): IceConnectionState = iceState
+
     public fun iceGatheringState(): IceGatheringState = gatheringState
+
     public fun signalingState(): SignalingState = signalState
+
     public fun localDescription(): SessionDescription? = localDesc
+
     public fun remoteDescription(): SessionDescription? = remoteDesc
 
     public fun setLocalDescription(desc: SessionDescription) {
         localDesc = desc
-        signalState = when (desc.sdpType) {
-            SdpType.Offer -> SignalingState.HaveLocalOffer
-            SdpType.PrAnswer -> SignalingState.HaveLocalPrAnswer
-            SdpType.Answer -> SignalingState.Stable
-            SdpType.Rollback -> SignalingState.Stable
-        }
+        signalState =
+            when (desc.sdpType) {
+                SdpType.Offer -> SignalingState.HaveLocalOffer
+                SdpType.PrAnswer -> SignalingState.HaveLocalPrAnswer
+                SdpType.Answer -> SignalingState.Stable
+                SdpType.Rollback -> SignalingState.Stable
+            }
         observer?.onSignalingChange(signalState)
     }
 
     public fun setRemoteDescription(desc: SessionDescription) {
         remoteDesc = desc
-        signalState = when (desc.sdpType) {
-            SdpType.Offer -> SignalingState.HaveRemoteOffer
-            SdpType.PrAnswer -> SignalingState.HaveRemotePrAnswer
-            SdpType.Answer -> SignalingState.Stable
-            SdpType.Rollback -> SignalingState.Stable
-        }
+        signalState =
+            when (desc.sdpType) {
+                SdpType.Offer -> SignalingState.HaveRemoteOffer
+                SdpType.PrAnswer -> SignalingState.HaveRemotePrAnswer
+                SdpType.Answer -> SignalingState.Stable
+                SdpType.Rollback -> SignalingState.Stable
+            }
         observer?.onSignalingChange(signalState)
     }
 
@@ -130,12 +145,12 @@ public class PeerConnection(
     }
 
     public fun senders(): List<RtpSender> = sendersList.toList()
+
     public fun receivers(): List<RtpReceiver> = receiversList.toList()
+
     public fun transceivers(): List<RtpTransceiver> = transceiversList.toList()
 
-    public fun createDataChannel(label: String, init: DataChannelInit = DataChannelInit()): DataChannel {
-        return DataChannel(label, init)
-    }
+    public fun createDataChannel(label: String, init: DataChannelInit = DataChannelInit()): DataChannel = DataChannel(label, init)
 
     public fun close() {
         connectionState = PeerConnectionState.Closed

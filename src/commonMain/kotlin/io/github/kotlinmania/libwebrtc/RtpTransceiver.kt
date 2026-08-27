@@ -22,9 +22,13 @@ public class RtpTransceiver(
     private var transceiverMid: String? = null,
 ) {
     public fun mid(): String? = transceiverMid
+
     public fun direction(): RtpTransceiverDirection = transceiverDirection
+
     public fun currentDirection(): RtpTransceiverDirection? = transceiverDirection
+
     public fun sender(): RtpSender = senderInstance
+
     public fun receiver(): RtpReceiver = receiverInstance
 
     public fun stop() {

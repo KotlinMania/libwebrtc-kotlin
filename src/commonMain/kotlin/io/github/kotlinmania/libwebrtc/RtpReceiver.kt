@@ -6,5 +6,6 @@ public class RtpReceiver(
     private val currentParameters: RtpParameters = RtpParameters(),
 ) {
     public fun track(): MediaStreamTrack? = currentTrack
+
     public fun parameters(): RtpParameters = currentParameters
 }

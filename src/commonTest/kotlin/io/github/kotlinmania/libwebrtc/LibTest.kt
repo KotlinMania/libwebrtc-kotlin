@@ -160,21 +160,23 @@ class LibTest {
 
     @Test
     fun videoFrameAndBuffer() {
-        val i420 = I420Buffer(
-            width = 640,
-            height = 480,
-            dataY = ByteArray(640 * 480),
-            strideY = 640,
-            dataU = ByteArray(320 * 240),
-            strideU = 320,
-            dataV = ByteArray(320 * 240),
-            strideV = 320,
-        )
-        val frame = VideoFrame(
-            rotation = VideoRotation.VideoRotation90,
-            timestampUs = 1000L,
-            buffer = i420,
-        )
+        val i420 =
+            I420Buffer(
+                width = 640,
+                height = 480,
+                dataY = ByteArray(640 * 480),
+                strideY = 640,
+                dataU = ByteArray(320 * 240),
+                strideU = 320,
+                dataV = ByteArray(320 * 240),
+                strideV = 320,
+            )
+        val frame =
+            VideoFrame(
+                rotation = VideoRotation.VideoRotation90,
+                timestampUs = 1000L,
+                buffer = i420,
+            )
         assertEquals(VideoRotation.VideoRotation90, frame.rotation)
         assertEquals(1000L, frame.timestampUs)
         assertEquals(640, frame.buffer.width)
@@ -232,30 +234,84 @@ class LibTest {
 
     @Test
     fun rtcStatsVariants() {
-        val codec = RtcStats.Codec(
-            id = "codec-1",
-            timestampUs = 123456L,
-            payloadType = 111,
-            mimeType = "audio/opus",
-            clockRate = 48000L,
-            channels = 2,
-        )
+        val codec =
+            RtcStats.Codec(
+                id = "codec-1",
+                timestampUs = 123456L,
+                payloadType = 111,
+                mimeType = "audio/opus",
+                clockRate = 48000L,
+                channels = 2,
+            )
         assertEquals("codec-1", codec.id)
         assertEquals("audio/opus", codec.mimeType)
 
-        val dataChannelStat = RtcStats.DataChannel(
-            id = "dc-1",
-            timestampUs = 123456L,
-            label = "data",
-            protocol = "",
-            dataChannelIdentifier = 1,
-            state = DataChannelState.Open,
-            messagesSent = 10,
-            bytesSent = 100,
-            messagesReceived = 5,
-            bytesReceived = 50,
-        )
+        val dataChannelStat =
+            RtcStats.DataChannel(
+                id = "dc-1",
+                timestampUs = 123456L,
+                label = "data",
+                protocol = "",
+                dataChannelIdentifier = 1,
+                state = DataChannelState.Open,
+                messagesSent = 10,
+                bytesSent = 100,
+                messagesReceived = 5,
+                bytesReceived = 50,
+            )
         assertEquals(DataChannelState.Open, dataChannelStat.state)
         assertEquals(10L, dataChannelStat.messagesSent)
+    }
+
+    @Test
+    fun audioSourceAndStream() {
+        val options = AudioSourceOptions(echoCancellation = true)
+        val source = NativeAudioSource(options, sampleRate = 48000u, numChannels = 2u)
+        assertEquals(true, source.audioOptions().echoCancellation)
+        assertEquals(48000u, source.sampleRate())
+        assertEquals(2u, source.numChannels())
+
+        val rtcSource = RtcAudioSource.Native(source)
+        assertEquals(48000u, rtcSource.sampleRate())
+
+        val track = RtcAudioTrack("audio-stream-track")
+        val stream = NativeAudioStream(track, sampleRate = 48000, numChannels = 2)
+        assertEquals(track, stream.track())
+        assertEquals(false, stream.isClosed())
+        stream.close()
+        assertEquals(true, stream.isClosed())
+    }
+
+    @Test
+    fun videoSourceAndStream() {
+        val res = VideoResolution(1920u, 1080u)
+        val source = NativeVideoSource(res)
+        assertEquals(1920u, source.videoResolution().width)
+        assertEquals(1080u, source.videoResolution().height)
+
+        val rtcSource = RtcVideoSource.Native(source)
+        assertEquals(1920u, rtcSource.videoResolution().width)
+
+        val track = RtcVideoTrack("video-stream-track")
+        val stream = NativeVideoStream(track)
+        assertEquals(track, stream.track())
+        assertEquals(false, stream.isClosed())
+        stream.close()
+        assertEquals(true, stream.isClosed())
+    }
+
+    @Test
+    fun desktopCapturerOptionsAndState() {
+        val options = DesktopCapturerOptions(DesktopCaptureSourceType.Window)
+        assertEquals(DesktopCaptureSourceType.Window, options.sourceType)
+        assertEquals(false, options.includeCursor)
+        options.setIncludeCursor(true)
+        assertEquals(true, options.includeCursor)
+
+        val capturer = DesktopCapturer(options)
+        assertEquals(false, capturer.isCapturing())
+        capturer.startCapture()
+        assertEquals(true, capturer.isCapturing())
+        assertTrue(capturer.getSourceList().isEmpty())
     }
 }
