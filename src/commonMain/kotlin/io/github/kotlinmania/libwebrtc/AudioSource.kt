@@ -23,11 +23,13 @@ public data class AudioSourceOptions(
 
 public class NativeAudioSource(
     options: AudioSourceOptions = AudioSourceOptions(),
-    public val sampleRate: UInt = 48000u,
-    public val numChannels: UInt = 2u,
+    sampleRate: UInt = 48000u,
+    numChannels: UInt = 2u,
     public val queueSizeMs: UInt = 1000u,
 ) {
     private var currentOptions: AudioSourceOptions = options
+    private val currentSampleRate: UInt = sampleRate
+    private val currentNumChannels: UInt = numChannels
 
     public fun clearBuffer() {
         // no-op buffer reset
@@ -43,9 +45,9 @@ public class NativeAudioSource(
 
     public fun audioOptions(): AudioSourceOptions = currentOptions
 
-    public fun sampleRate(): UInt = sampleRate
+    public fun sampleRate(): UInt = currentSampleRate
 
-    public fun numChannels(): UInt = numChannels
+    public fun numChannels(): UInt = currentNumChannels
 }
 
 public sealed class RtcAudioSource {
