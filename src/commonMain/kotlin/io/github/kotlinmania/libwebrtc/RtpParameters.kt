@@ -1,4 +1,4 @@
-// port-lint: source rtp_parameters.rs
+// port-lint: source libwebrtc/libwebrtc/src/rtp_parameters.rs
 package io.github.kotlinmania.libwebrtc
 
 public enum class Priority {

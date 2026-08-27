@@ -1,4 +1,4 @@
-// port-lint: source peer_connection.rs
+// port-lint: source libwebrtc/libwebrtc/src/peer_connection.rs
 package io.github.kotlinmania.libwebrtc
 
 public enum class PeerConnectionState {

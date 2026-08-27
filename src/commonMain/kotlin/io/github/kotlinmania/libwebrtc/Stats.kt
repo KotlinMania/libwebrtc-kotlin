@@ -1,4 +1,4 @@
-// port-lint: source stats.rs
+// port-lint: source libwebrtc/libwebrtc/src/stats.rs
 package io.github.kotlinmania.libwebrtc
 
 public enum class QualityLimitationReason {

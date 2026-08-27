@@ -1,4 +1,4 @@
-// port-lint: source media_stream.rs
+// port-lint: source libwebrtc/libwebrtc/src/media_stream.rs
 package io.github.kotlinmania.libwebrtc
 
 public enum class RtcTrackState {
