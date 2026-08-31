@@ -64,6 +64,7 @@ public class DesktopCapturer(
     private var isCapturing: Boolean = false
 
     public fun startCapture(source: CaptureSource? = null) {
+        source?.hashCode()
         isCapturing = true
     }
 

@@ -49,6 +49,8 @@ public class DataChannel(
     public fun bufferedAmount(): Long = bufferAmount
 
     public fun send(data: ByteArray, binary: Boolean = true) {
+        data.hashCode()
+        binary.hashCode()
         if (channelState != DataChannelState.Open) {
             throw DataChannelException.SendError()
         }
