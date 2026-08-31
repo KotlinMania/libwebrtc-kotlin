@@ -1,4 +1,4 @@
-// port-lint: source lib.rs
+// port-lint: source libwebrtc/libwebrtc/src/lib.rs
 package io.github.kotlinmania.libwebrtc
 
 // Copyright 2025 LiveKit, Inc.

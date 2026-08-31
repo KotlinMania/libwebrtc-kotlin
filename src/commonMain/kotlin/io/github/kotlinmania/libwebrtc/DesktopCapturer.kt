@@ -1,4 +1,4 @@
-// port-lint: source desktop_capturer.rs
+// port-lint: source libwebrtc/libwebrtc/src/desktop_capturer.rs
 // Copyright 2025 LiveKit, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
