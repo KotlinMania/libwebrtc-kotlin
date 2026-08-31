@@ -1,4 +1,4 @@
-// port-lint: tests lib.rs
+// port-lint: tests libwebrtc/libwebrtc/src/lib.rs
 package io.github.kotlinmania.libwebrtc
 
 import kotlin.test.Test
