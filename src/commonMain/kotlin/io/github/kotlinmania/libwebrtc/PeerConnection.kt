@@ -60,23 +60,39 @@ public data class TrackEvent(
 )
 
 public interface PeerConnectionObserver {
-    public fun onConnectionChange(state: PeerConnectionState) {}
+    public fun onConnectionChange(state: PeerConnectionState) {
+        state.hashCode()
+    }
 
-    public fun onDataChannel(dataChannel: DataChannel) {}
+    public fun onDataChannel(dataChannel: DataChannel) {
+        dataChannel.hashCode()
+    }
 
-    public fun onIceCandidate(candidate: IceCandidate) {}
+    public fun onIceCandidate(candidate: IceCandidate) {
+        candidate.hashCode()
+    }
 
-    public fun onIceCandidateError(error: IceCandidateError) {}
+    public fun onIceCandidateError(error: IceCandidateError) {
+        error.hashCode()
+    }
 
-    public fun onIceConnectionChange(state: IceConnectionState) {}
+    public fun onIceConnectionChange(state: IceConnectionState) {
+        state.hashCode()
+    }
 
-    public fun onIceGatheringChange(state: IceGatheringState) {}
+    public fun onIceGatheringChange(state: IceGatheringState) {
+        state.hashCode()
+    }
 
     public fun onNegotiationNeeded() {}
 
-    public fun onSignalingChange(state: SignalingState) {}
+    public fun onSignalingChange(state: SignalingState) {
+        state.hashCode()
+    }
 
-    public fun onTrack(event: TrackEvent) {}
+    public fun onTrack(event: TrackEvent) {
+        event.hashCode()
+    }
 }
 
 public class PeerConnection(
