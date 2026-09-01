@@ -16,8 +16,12 @@
     "lint": true
   },
   "reexport_modules": [
+    "lib",
     "lib.rs",
-    "prelude.rs"
+    "libwebrtc/libwebrtc/src/lib.rs",
+    "prelude",
+    "prelude.rs",
+    "libwebrtc/libwebrtc/src/prelude.rs"
   ]
 }
 
