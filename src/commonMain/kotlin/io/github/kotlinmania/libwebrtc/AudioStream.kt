@@ -1,4 +1,4 @@
-// port-lint: source libwebrtc/libwebrtc/src/audio_stream.rs
+// port-lint: source audio_stream.rs
 // Copyright 2025 LiveKit, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
