@@ -1,4 +1,4 @@
-// port-lint: source libwebrtc/libwebrtc/src/ice_candidate.rs
+// port-lint: source ice_candidate.rs
 package io.github.kotlinmania.libwebrtc
 
 public class IceCandidate(

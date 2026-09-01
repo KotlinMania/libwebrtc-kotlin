@@ -1,4 +1,4 @@
-// port-lint: source libwebrtc/libwebrtc/src/rtp_transceiver.rs
+// port-lint: source rtp_transceiver.rs
 package io.github.kotlinmania.libwebrtc
 
 public enum class RtpTransceiverDirection {
