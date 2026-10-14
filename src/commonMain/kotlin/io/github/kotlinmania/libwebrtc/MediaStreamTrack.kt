@@ -31,7 +31,7 @@ public sealed class MediaStreamTrack {
         public val track: RtcAudioTrack,
     ) : MediaStreamTrack()
 
-    public val id: String
+    internal val id: String
         get() = id()
 
     public val kind: String
@@ -41,10 +41,10 @@ public sealed class MediaStreamTrack {
                 is Audio -> "audio"
             }
 
-    public val enabled: Boolean
+    internal val enabled: Boolean
         get() = enabled()
 
-    public val state: RtcTrackState
+    internal val state: RtcTrackState
         get() = state()
 
     public fun id(): String =

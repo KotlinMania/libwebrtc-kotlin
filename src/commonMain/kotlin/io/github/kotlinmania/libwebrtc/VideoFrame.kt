@@ -122,18 +122,11 @@ public class Nv12Planes(
 }
 
 public interface VideoBuffer {
-    public val width: UInt
-    public val height: UInt
-    public val bufferType: VideoBufferType
+    public fun width(): UInt
 
-    public val type: VideoBufferType
-        get() = bufferType
+    public fun height(): UInt
 
-    public fun width(): UInt = width
-
-    public fun height(): UInt = height
-
-    public fun bufferType(): VideoBufferType = bufferType
+    public fun bufferType(): VideoBufferType
 
     public fun toI420(): I420Buffer
 
@@ -145,6 +138,18 @@ public interface VideoBuffer {
         dstHeight: Int,
     )
 }
+
+internal val VideoBuffer.width: UInt
+    get() = width()
+
+internal val VideoBuffer.height: UInt
+    get() = height()
+
+internal val VideoBuffer.bufferType: VideoBufferType
+    get() = bufferType()
+
+internal val VideoBuffer.type: VideoBufferType
+    get() = bufferType()
 
 public interface VideoFrameBufferExt : VideoBuffer
 
@@ -166,14 +171,11 @@ public class NativeBuffer internal constructor(
         height: UInt,
     ) : this(handle = ImpNativeBuffer(bufferWidth = width, bufferHeight = height))
 
-    override val width: UInt
-        get() = handle.width()
+    override fun width(): UInt = handle.width()
 
-    override val height: UInt
-        get() = handle.height()
+    override fun height(): UInt = handle.height()
 
-    override val bufferType: VideoBufferType
-        get() = VideoBufferType.Native
+    override fun bufferType(): VideoBufferType = VideoBufferType.Native
 
     override fun toI420(): I420Buffer = I420Buffer(handle = handle.toI420())
 
@@ -189,7 +191,7 @@ public class NativeBuffer internal constructor(
 
     public fun getCvPixelBuffer(): Any? = handle.getCvPixelBuffer()
 
-    override fun toString(): String = "NativeBuffer(width=$width, height=$height)"
+    override fun toString(): String = "NativeBuffer(width=${width()}, height=${height()})"
 
     public companion object {
         public fun fromCvPixelBuffer(
@@ -208,14 +210,11 @@ public class WebGlBuffer internal constructor(
         height: UInt,
     ) : this(handle = ImpWebGlBuffer(bufferWidth = width.toInt(), bufferHeight = height.toInt()))
 
-    override val width: UInt
-        get() = handle.width
+    override fun width(): UInt = handle.width
 
-    override val height: UInt
-        get() = handle.height
+    override fun height(): UInt = handle.height
 
-    override val bufferType: VideoBufferType
-        get() = VideoBufferType.WebGl
+    override fun bufferType(): VideoBufferType = VideoBufferType.WebGl
 
     override fun toI420(): I420Buffer = handle.toI420()
 
@@ -229,7 +228,7 @@ public class WebGlBuffer internal constructor(
         handle.toArgb(format, dst, dstStride, dstWidth, dstHeight)
     }
 
-    override fun toString(): String = "WebGlBuffer(width=$width, height=$height)"
+    override fun toString(): String = "WebGlBuffer(width=${width()}, height=${height()})"
 }
 
 public class I420Buffer internal constructor(
@@ -272,31 +271,28 @@ public class I420Buffer internal constructor(
             ),
     )
 
-    override val width: UInt
-        get() = handle.width()
+    override fun width(): UInt = handle.width()
 
-    override val height: UInt
-        get() = handle.height()
+    override fun height(): UInt = handle.height()
 
-    override val bufferType: VideoBufferType
-        get() = VideoBufferType.I420
+    override fun bufferType(): VideoBufferType = VideoBufferType.I420
 
-    public val dataY: ByteArray
+    internal val dataY: ByteArray
         get() = handle.yData
 
-    public val strideY: Int
+    internal val strideY: Int
         get() = handle.strideY().toInt()
 
-    public val dataU: ByteArray
+    internal val dataU: ByteArray
         get() = handle.uData
 
-    public val strideU: Int
+    internal val strideU: Int
         get() = handle.strideU().toInt()
 
-    public val dataV: ByteArray
+    internal val dataV: ByteArray
         get() = handle.vData
 
-    public val strideV: Int
+    internal val strideV: Int
         get() = handle.strideV().toInt()
 
     override fun toI420(): I420Buffer = I420Buffer(handle = handle.toI420())
@@ -373,14 +369,11 @@ public class I420ABuffer internal constructor(
         height: UInt,
     ) : this(handle = ImpI420ABuffer(bufferWidth = width, bufferHeight = height))
 
-    override val width: UInt
-        get() = handle.width()
+    override fun width(): UInt = handle.width()
 
-    override val height: UInt
-        get() = handle.height()
+    override fun height(): UInt = handle.height()
 
-    override val bufferType: VideoBufferType
-        get() = VideoBufferType.I420A
+    override fun bufferType(): VideoBufferType = VideoBufferType.I420A
 
     override fun toI420(): I420Buffer = I420Buffer(handle = handle.toI420())
 
@@ -438,14 +431,11 @@ public class I422Buffer internal constructor(
         height: UInt,
     ) : this(handle = ImpI422Buffer(bufferWidth = width, bufferHeight = height))
 
-    override val width: UInt
-        get() = handle.width()
+    override fun width(): UInt = handle.width()
 
-    override val height: UInt
-        get() = handle.height()
+    override fun height(): UInt = handle.height()
 
-    override val bufferType: VideoBufferType
-        get() = VideoBufferType.I422
+    override fun bufferType(): VideoBufferType = VideoBufferType.I422
 
     override fun toI420(): I420Buffer = I420Buffer(handle = handle.toI420())
 
@@ -521,14 +511,11 @@ public class I444Buffer internal constructor(
         height: UInt,
     ) : this(handle = ImpI444Buffer(bufferWidth = width, bufferHeight = height))
 
-    override val width: UInt
-        get() = handle.width()
+    override fun width(): UInt = handle.width()
 
-    override val height: UInt
-        get() = handle.height()
+    override fun height(): UInt = handle.height()
 
-    override val bufferType: VideoBufferType
-        get() = VideoBufferType.I444
+    override fun bufferType(): VideoBufferType = VideoBufferType.I444
 
     override fun toI420(): I420Buffer = I420Buffer(handle = handle.toI420())
 
@@ -604,14 +591,11 @@ public class I010Buffer internal constructor(
         height: UInt,
     ) : this(handle = ImpI010Buffer(bufferWidth = width, bufferHeight = height))
 
-    override val width: UInt
-        get() = handle.width()
+    override fun width(): UInt = handle.width()
 
-    override val height: UInt
-        get() = handle.height()
+    override fun height(): UInt = handle.height()
 
-    override val bufferType: VideoBufferType
-        get() = VideoBufferType.I010
+    override fun bufferType(): VideoBufferType = VideoBufferType.I010
 
     override fun toI420(): I420Buffer = I420Buffer(handle = handle.toI420())
 
@@ -687,14 +671,11 @@ public class NV12Buffer internal constructor(
         height: UInt,
     ) : this(handle = ImpNV12Buffer(bufferWidth = width, bufferHeight = height))
 
-    override val width: UInt
-        get() = handle.width()
+    override fun width(): UInt = handle.width()
 
-    override val height: UInt
-        get() = handle.height()
+    override fun height(): UInt = handle.height()
 
-    override val bufferType: VideoBufferType
-        get() = VideoBufferType.NV12
+    override fun bufferType(): VideoBufferType = VideoBufferType.NV12
 
     override fun toI420(): I420Buffer = I420Buffer(handle = handle.toI420())
 

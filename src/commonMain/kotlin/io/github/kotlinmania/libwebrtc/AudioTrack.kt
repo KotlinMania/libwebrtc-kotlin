@@ -29,16 +29,16 @@ public class RtcAudioTrack internal constructor(
         handle = ImpRtcAudioTrack(trackId = id, trackEnabled = enabled, trackState = state),
     )
 
-    public val id: String
+    internal val id: String
         get() = handle.id()
 
     public val kind: String
         get() = "audio"
 
-    public val enabled: Boolean
+    internal val enabled: Boolean
         get() = handle.enabled()
 
-    public val state: RtcTrackState
+    internal val state: RtcTrackState
         get() = handle.state()
 
     public fun id(): String = handle.id()

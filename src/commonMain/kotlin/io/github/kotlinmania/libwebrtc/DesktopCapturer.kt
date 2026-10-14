@@ -199,22 +199,22 @@ public class DesktopFrame internal constructor(
             ),
     )
 
-    public val width: Int
+    internal val width: Int
         get() = imp.width()
 
-    public val height: Int
+    internal val height: Int
         get() = imp.height()
 
-    public val stride: UInt
+    internal val stride: UInt
         get() = imp.stride()
 
-    public val left: Int
+    internal val left: Int
         get() = imp.left()
 
-    public val top: Int
+    internal val top: Int
         get() = imp.top()
 
-    public val data: ByteArray
+    internal val data: ByteArray
         get() = imp.data()
 
     /**
@@ -262,13 +262,13 @@ public class CaptureSource internal constructor(
         imp = ImpCaptureSource(sourceId = id, sourceTitle = title, sourceDisplayId = displayId),
     )
 
-    public val id: ULong
+    internal val id: ULong
         get() = imp.id()
 
-    public val title: String
+    internal val title: String
         get() = imp.title()
 
-    public val displayId: Long
+    internal val displayId: Long
         get() = imp.displayId()
 
     /**

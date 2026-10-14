@@ -28,13 +28,13 @@ public class IceCandidate internal constructor(
         handle = ImpIceCandidate(mid = sdpMid, mlineIndex = sdpMLineIndex, candidateSdp = candidate),
     )
 
-    public val sdpMid: String
+    internal val sdpMid: String
         get() = handle.sdpMid()
 
-    public val sdpMLineIndex: Int
+    internal val sdpMLineIndex: Int
         get() = handle.sdpMlineIndex()
 
-    public val candidate: String
+    internal val candidate: String
         get() = handle.candidate()
 
     public fun sdpMid(): String = handle.sdpMid()

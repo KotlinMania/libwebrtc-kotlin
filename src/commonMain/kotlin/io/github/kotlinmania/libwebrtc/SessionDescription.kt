@@ -61,7 +61,7 @@ public class SessionDescription internal constructor(
     public val sdp: String
         get() = handle.sdp
 
-    public val sdpType: SdpType
+    internal val sdpType: SdpType
         get() = handle.sdpType()
 
     public fun sdpType(): SdpType = handle.sdpType()

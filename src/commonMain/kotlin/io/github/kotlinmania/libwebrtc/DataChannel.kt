@@ -89,10 +89,10 @@ public class DataChannel internal constructor(
             ),
     )
 
-    public val label: String
+    internal val label: String
         get() = handle.label()
 
-    public val id: Int
+    internal val id: Int
         get() = handle.id()
 
     public fun send(data: ByteArray, binary: Boolean) {

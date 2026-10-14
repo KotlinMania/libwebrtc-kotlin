@@ -22,7 +22,7 @@ public class MediaStream internal constructor(
 ) {
     public constructor(id: String) : this(handle = ImpMediaStream(streamId = id))
 
-    public val id: String
+    internal val id: String
         get() = handle.id()
 
     public fun id(): String = handle.id()
