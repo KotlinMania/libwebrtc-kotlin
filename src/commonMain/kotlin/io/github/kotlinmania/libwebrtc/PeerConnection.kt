@@ -100,6 +100,12 @@ public class OfferOptions(
 }
 
 public class AnswerOptions {
+    override fun equals(other: Any?): Boolean = other is AnswerOptions
+
+    override fun hashCode(): Int = 0
+
+    override fun toString(): String = "AnswerOptions"
+
     public companion object {
         public fun default(): AnswerOptions = AnswerOptions()
     }
