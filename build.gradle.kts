@@ -467,7 +467,7 @@ kotlin {
         configureBenchmarkCompilation()
         browser {
             testTask {
-                enabled = !ffiNapiEnabled
+                enabled = !napiFfiEnabled
             }
         }
         nodejs()
@@ -479,7 +479,7 @@ kotlin {
         configureBenchmarkCompilation()
         browser {
             testTask {
-                enabled = !ffiNapiEnabled
+                enabled = !napiFfiEnabled
             }
         }
         nodejs()
