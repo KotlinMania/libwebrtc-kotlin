@@ -292,8 +292,8 @@ class LibTest {
             RtcStats.MediaSource(
                 id = "ms-1",
                 timestampUs = 123456L,
-                source = stats.MediaSourceStats(trackIdentifier = "track-1", kind = "audio"),
-                audio = stats.AudioSourceStats(audioLevel = 0.5),
+                source = MediaSourceStats(trackIdentifier = "track-1", kind = "audio"),
+                audio = AudioSourceStats(audioLevel = 0.5),
             )
         assertEquals("ms-1", mediaSourceStat.id)
         assertEquals("audio", mediaSourceStat.source.kind)
@@ -353,16 +353,17 @@ class LibTest {
         assertEquals(1uL, sources[0].id())
         assertEquals("Primary Display", sources[0].title())
 
-        var capturedResult: Result<DesktopFrame>? = null
+        var capturedFrame: DesktopFrame? = null
+        var capturedError: CaptureError? = null
         assertTrue(capturer.selectSource(sources[0].id()))
-        capturer.start { result ->
-            capturedResult = result
+        capturer.start { frame, error ->
+            capturedFrame = frame
+            capturedError = error
         }
         assertEquals(true, capturer.isCapturing())
         capturer.captureFrame()
-        assertNotNull(capturedResult)
-        assertTrue(capturedResult.isSuccess)
-        val desktopFrame = capturedResult.getOrThrow()
+        val desktopFrame = assertNotNull(capturedFrame)
+        assertEquals(null, capturedError)
         assertTrue(desktopFrame.width() > 0)
         assertTrue(desktopFrame.height() > 0)
     }
@@ -451,8 +452,8 @@ class LibTest {
             srcStrideU = (width / 2).toUInt(),
             srcV = srcV,
             srcStrideV = (width / 2).toUInt(),
-            dstAbgr = dstRgba,
-            dstStrideAbgr = (width * 4).toUInt(),
+            dst = dstRgba,
+            dstStride = (width * 4).toUInt(),
             width = width,
             height = height,
         )
@@ -462,8 +463,8 @@ class LibTest {
         val dstU = ByteArray((width / 2) * (height / 2))
         val dstV = ByteArray((width / 2) * (height / 2))
         abgrToI420(
-            srcAbgr = dstRgba,
-            srcStrideAbgr = (width * 4).toUInt(),
+            srcArgb = dstRgba,
+            srcStrideArgb = (width * 4).toUInt(),
             dstY = dstY,
             dstStrideY = width.toUInt(),
             dstU = dstU,
