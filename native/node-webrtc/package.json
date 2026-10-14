@@ -1,0 +1,16 @@
+{
+  "name": "@kotlinmania/webrtc-native-bindings",
+  "version": "0.1.0",
+  "description": "Native WebRTC C-ABI bindings for Kotlin/JS and Kotlin/WasmJS via N-API",
+  "main": "index.js",
+  "scripts": {
+    "install": "node-gyp rebuild"
+  },
+  "dependencies": {
+    "node-addon-api": "^8.0.0"
+  },
+  "devDependencies": {
+    "node-gyp": "^10.0.0"
+  },
+  "gypfile": true
+}
