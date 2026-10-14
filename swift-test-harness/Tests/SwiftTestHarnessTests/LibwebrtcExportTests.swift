@@ -12,8 +12,8 @@ struct LibwebrtcExportTests {
 
         let factory = PeerConnectionFactory.Companion.shared.default()
         let pc = factory.createPeerConnection(config: RtcConfiguration.Companion.shared.default())
-        #expect(pc.connectionState() == PeerConnectionState.new)
+        #expect(pc.connectionState() == PeerConnectionState.New)
         pc.close()
-        #expect(pc.connectionState() == PeerConnectionState.closed)
+        #expect(pc.connectionState() == PeerConnectionState.Closed)
     }
 }
