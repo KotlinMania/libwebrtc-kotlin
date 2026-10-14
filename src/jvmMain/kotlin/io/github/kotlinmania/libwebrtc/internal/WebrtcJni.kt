@@ -1,4 +1,3 @@
-// port-lint: source native/mod.rs
 package io.github.kotlinmania.libwebrtc.internal
 
 internal object WebrtcJni {

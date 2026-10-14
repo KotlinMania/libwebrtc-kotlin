@@ -24,6 +24,9 @@
     "libwebrtc/libwebrtc/src/prelude.rs",
     "web/mod",
     "web/mod.rs",
-    "libwebrtc/libwebrtc/src/web/mod.rs"
+    "libwebrtc/libwebrtc/src/web/mod.rs",
+    "native/mod",
+    "native/mod.rs",
+    "libwebrtc/libwebrtc/src/native/mod.rs"
   ]
 }

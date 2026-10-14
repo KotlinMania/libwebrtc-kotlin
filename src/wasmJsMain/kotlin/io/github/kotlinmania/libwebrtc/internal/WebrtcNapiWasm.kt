@@ -1,4 +1,3 @@
-// port-lint: source native/mod.rs
 @file:OptIn(ExperimentalWasmJsInterop::class)
 
 package io.github.kotlinmania.libwebrtc.internal

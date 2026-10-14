@@ -16,7 +16,6 @@
 package io.github.kotlinmania.libwebrtc.native
 
 public fun initializeAndroid(vm: Any?) {
-    val jvmHandle = (vm?.hashCode() ?: 1).toLong().let { if (it == 0L) 1L else it }
+    val jvmHandle = (vm as? Number)?.toLong() ?: (vm?.hashCode() ?: 1).toLong().let { if (it == 0L) 1L else it }
     WebrtcNativeBridge.initAndroid(jvmHandle)
-    platformInitializeAndroid(vm)
 }

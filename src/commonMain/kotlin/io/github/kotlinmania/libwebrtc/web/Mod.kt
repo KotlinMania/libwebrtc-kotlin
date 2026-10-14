@@ -1,4 +1,3 @@
-// port-lint: source web/mod.rs
 // Copyright 2025 LiveKit, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// port-lint: source web/mod.rs
 
 package io.github.kotlinmania.libwebrtc.web
 
-import io.github.kotlinmania.libwebrtc.native.isWebPlatform
-
-/**
- * Web platform backing module.
- */
-internal object WebModule {
-    internal fun isAvailable(): Boolean = isWebPlatform
-}
+// Tracking file for upstream web/mod.rs.
+//
+// Upstream module declarations:
+//   DataChannel -> web/DataChannel.kt
+//   MediaStream -> web/MediaStream.kt
+//
+// Callers migrated:
+//   (none)

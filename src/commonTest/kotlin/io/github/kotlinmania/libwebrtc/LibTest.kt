@@ -1,4 +1,4 @@
-// port-lint: tests lib.rs
+// port-lint: tests native/peer_connection.rs
 package io.github.kotlinmania.libwebrtc
 
 import io.github.kotlinmania.libwebrtc.native.AudioMixer

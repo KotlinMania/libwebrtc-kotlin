@@ -1,4 +1,3 @@
-// port-lint: source native/mod.rs
 package io.github.kotlinmania.libwebrtc.native
 
 internal actual val isWebPlatform: Boolean = false
@@ -6,11 +5,6 @@ internal actual val isWebPlatform: Boolean = false
 internal actual val isNativePlatform: Boolean = true
 
 internal actual val isAndroidPlatform: Boolean = true
-
-internal actual fun platformInitializeAndroid(vm: Any?) {
-    val handle = (vm as? Number)?.toLong() ?: 1L
-    WebrtcNativeBridge.initAndroid(handle)
-}
 
 internal actual object WebrtcNativeBridge {
     private class PcSlot(

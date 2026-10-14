@@ -1,4 +1,3 @@
-// port-lint: source native/mod.rs
 // Copyright 2025 LiveKit, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// port-lint: source native/mod.rs
 
 package io.github.kotlinmania.libwebrtc.native
 
@@ -19,13 +19,43 @@ import io.github.kotlinmania.libwebrtc.MediaType
 import io.github.kotlinmania.libwebrtc.RtcError
 import io.github.kotlinmania.libwebrtc.RtcErrorType
 
+// Tracking file for upstream native/mod.rs.
+//
+// Upstream module declarations:
+//   Android -> native/Android.kt
+//   Apm -> native/Apm.kt
+//   AudioMixer -> native/AudioMixer.kt
+//   AudioResampler -> native/AudioResampler.kt
+//   AudioSource -> native/AudioSource.kt
+//   AudioStream -> native/AudioStream.kt
+//   AudioTrack -> native/AudioTrack.kt
+//   DataChannel -> native/DataChannel.kt
+//   DesktopCapturer -> native/DesktopCapturer.kt
+//   FrameCryptor -> native/FrameCryptor.kt
+//   IceCandidate -> native/IceCandidate.kt
+//   MediaStream -> native/MediaStream.kt
+//   MediaStreamTrack -> native/MediaStreamTrack.kt
+//   PeerConnection -> native/PeerConnection.kt
+//   PeerConnectionFactory -> native/PeerConnectionFactory.kt
+//   RtpParameters -> native/RtpParameters.kt
+//   RtpReceiver -> native/RtpReceiver.kt
+//   RtpSender -> native/RtpSender.kt
+//   RtpTransceiver -> native/RtpTransceiver.kt
+//   SessionDescription -> native/SessionDescription.kt
+//   VideoFrame -> native/VideoFrame.kt
+//   VideoSource -> native/VideoSource.kt
+//   VideoStream -> native/VideoStream.kt
+//   VideoTrack -> native/VideoTrack.kt
+//   YuvHelper -> native/YuvHelper.kt
+//
+// Callers migrated:
+//   (none)
+
 internal expect val isWebPlatform: Boolean
 
 internal expect val isNativePlatform: Boolean
 
 internal expect val isAndroidPlatform: Boolean
-
-internal expect fun platformInitializeAndroid(vm: Any?)
 
 internal expect object WebrtcNativeBridge {
     fun initAndroid(jvmHandle: Long)

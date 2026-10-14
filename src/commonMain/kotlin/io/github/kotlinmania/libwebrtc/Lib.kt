@@ -1,4 +1,6 @@
 // port-lint: source lib.rs
+package io.github.kotlinmania.libwebrtc
+
 // Copyright 2025 LiveKit, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,46 +15,50 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.github.kotlinmania.libwebrtc
-
-import kotlin.experimental.ExperimentalObjCRefinement
-import kotlin.native.HiddenFromObjC
-
-public enum class MediaType {
-    Audio,
-    Video,
-    Data,
-    Unsupported,
-}
-
-public enum class RtcErrorType {
-    Internal,
-    InvalidSdp,
-    InvalidState,
-}
-
-@OptIn(ExperimentalObjCRefinement::class)
-@HiddenFromObjC
-public class RtcError(
-    public val errorType: RtcErrorType,
-    public val rtcMessage: String,
-) : Exception("an RtcError occured: $errorType - $rtcMessage") {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-        other as RtcError
-        if (errorType != other.errorType) return false
-        if (rtcMessage != other.rtcMessage) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = errorType.hashCode()
-        result = 31 * result + rtcMessage.hashCode()
-        return result
-    }
-
-    override fun toString(): String = "RtcError(errorType=$errorType, message=$rtcMessage)"
-}
-
-public object Lib
+// Tracking file for upstream lib.rs. The file in upstream Rust carries real
+// declarations alongside module declarations and target-gated re-export blocks;
+// per workspace policy a Kotlin source file may not bridge re-exports via
+// central typealiases, and a module root that mixes real code with module
+// declarations is parceled into per-symbol Kotlin files. This file records
+// the upstream order and the migration ledger; the implementation lives in
+// the parceled files below.
+//
+// Parceled per-symbol files in this package share the lib.rs provenance:
+//   MediaType     -> MediaType.kt
+//   RtcErrorType  -> RtcErrorType.kt
+//   RtcError      -> RtcError.kt
+//
+// Upstream submodule declarations in source order:
+//   AudioFrame            -> AudioFrame.kt
+//   AudioSource           -> AudioSource.kt
+//   AudioStream           -> AudioStream.kt
+//   AudioTrack            -> AudioTrack.kt
+//   DataChannel           -> DataChannel.kt
+//   DesktopCapturer       -> DesktopCapturer.kt
+//   IceCandidate          -> IceCandidate.kt
+//   MediaStream           -> MediaStream.kt
+//   MediaStreamTrack      -> MediaStreamTrack.kt
+//   PeerConnection        -> PeerConnection.kt
+//   PeerConnectionFactory -> PeerConnectionFactory.kt
+//   Prelude               -> Prelude.kt
+//   RtpParameters         -> RtpParameters.kt
+//   RtpReceiver           -> RtpReceiver.kt
+//   RtpSender             -> RtpSender.kt
+//   RtpTransceiver        -> RtpTransceiver.kt
+//   SessionDescription    -> SessionDescription.kt
+//   Stats                 -> Stats.kt
+//   VideoFrame            -> VideoFrame.kt
+//   VideoSource           -> VideoSource.kt
+//   VideoStream           -> VideoStream.kt
+//   VideoTrack            -> VideoTrack.kt
+//
+// Upstream native module re-exports:
+//   native/Apm.kt
+//   native/AudioMixer.kt
+//   native/AudioResampler.kt
+//   native/FrameCryptor.kt
+//   native/YuvHelper.kt
+//   native/Android.kt
+//
+// Callers migrated:
+//   (none)
