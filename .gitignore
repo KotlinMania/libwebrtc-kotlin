@@ -1,73 +1,101 @@
-# Kotlin/Gradle build artifacts
-build/
+# Gradle
 .gradle/
-.kotlin/
-*.class
-*.jar
-*.war
-*.ear
-
-# Keep the Gradle wrapper jar checked in so CI can run `./gradlew`.
+build/
 !gradle/wrapper/gradle-wrapper.jar
+
+# Kotlin
+.kotlin/
+.konan/
+
+# Node.js / Yarn
+node_modules/
+.yarn/
+yarn-error.log
+
+# Native N-API addon build output
+/native/node-webrtc/node_modules/
+/native/node-webrtc/build/
+/native/node-webrtc/package-lock.json
+native/**/node_modules/
+native/**/build/
 
 # IDE
 .idea/
 *.iml
-out/
+*.ipr
+*.iws
+.vscode/
+.fleet/
 
-# Upstream Rust source — clone freshly when porting begins
+# OS
+.DS_Store
+Thumbs.db
+
+# Test reports
+reports/
+**/build/reports/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
 tmp/
-!tmp/.gitkeep
 
 # AST distance reports and binaries
 port_status_report.md
 high_priority_ports.md
-ast_distance_*.txt
-NEXT_ACTIONS.md
 port_lint_proposed_changes.md
+ast_distance_*.txt
+deep_symbol_inventory.txt
+NEXT_ACTIONS.md
 .cache/
 .local/
 *.lock
 kotlin-js-store/*
 !kotlin-js-store/package.json
 !kotlin-js-store/yarn.lock
-!kotlin-js-store/wasm/
-!kotlin-js-store/wasm/yarn.lock
+package-lock.json
+
+# Built tools
 tools/ast_distance/ast_distance
 tools/ast_distance/build/
 tools/ast_distance
 tools/ast_distance_bin
+tools/
 
 # JVM heap dumps
 *.hprof
-java_pid*.hprof
+hs_err_pid*.log
 
-# macOS Finder metadata
-.DS_Store
-
-# Python bytecode
-__pycache__/
-*.pyc
-
-# Android SDK
-/.android-sdk/
+# Credentials and keys (NEVER commit)
+creds.xml
+*.asc
+*.gpg
+*.key
+*.pem
+passphrase.txt
 local.properties
+.env
+.env.*
 
-# Swift Package Manager / Xcode workspace state.
-#
-# `swift-test-harness/` is a real SPM package that exercises the Kotlin
-# Swift Export pipeline against the artifacts produced by
-# `embedSwiftExportForXcode`. Its `Package.swift`, `Tests/`, and
-# per-package `.gitignore` (which ignores its own `.build/`) are all
-# tracked. The patterns below cover the Swift/Xcode workspace state
-# that this harness — or any future Swift Package added under the
-# repo — would also produce.
-#
-# Note: the staging directory the Kotlin Swift Export pipeline writes
-# to (`build/swift-test/lib*.a` + `.swiftmodule/` bundles when run with
-# the Xcode-style env vars) is already covered by `build/` above.
+# Publishing staging
+**/build/staging-deploy/
+
+# Benchmark results
+**/build/benchmarks/
+
+# Android local SDK
+.android-sdk/
+
+# Swift Package Manager & Xcode
+.swift-home/
 .swiftpm/
-DerivedData/
+swift-test-harness/.build/
+swift-test-harness/.swiftpm/
+swift-test-harness/Frameworks/
+swift-test-harness/Package.resolved
+*.xcuserdata/
 *.xcuserstate
 *.xcworkspace/xcuserdata/
 *.xcodeproj/xcuserdata/

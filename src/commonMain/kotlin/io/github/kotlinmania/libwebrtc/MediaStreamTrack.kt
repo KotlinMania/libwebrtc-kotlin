@@ -15,16 +15,71 @@
 
 package io.github.kotlinmania.libwebrtc
 
+import io.github.kotlinmania.libwebrtc.native.NativeMediaStreamTrackHandle
+
 public enum class RtcTrackState {
     Live,
     Ended,
 }
 
-public interface MediaStreamTrack {
-    public val id: String
-    public val kind: String
-    public val enabled: Boolean
-    public val state: RtcTrackState
+public sealed class MediaStreamTrack {
+    public class Video(
+        public val track: RtcVideoTrack,
+    ) : MediaStreamTrack()
 
-    public fun setEnabled(enabled: Boolean): Boolean
+    public class Audio(
+        public val track: RtcAudioTrack,
+    ) : MediaStreamTrack()
+
+    internal val id: String
+        get() = id()
+
+    public val kind: String
+        get() =
+            when (this) {
+                is Video -> "video"
+                is Audio -> "audio"
+            }
+
+    internal val enabled: Boolean
+        get() = enabled()
+
+    internal val state: RtcTrackState
+        get() = state()
+
+    public fun id(): String =
+        when (this) {
+            is Video -> track.id()
+            is Audio -> track.id()
+        }
+
+    public fun enabled(): Boolean =
+        when (this) {
+            is Video -> track.enabled()
+            is Audio -> track.enabled()
+        }
+
+    public fun setEnabled(enabled: Boolean): Boolean =
+        when (this) {
+            is Video -> track.setEnabled(enabled)
+            is Audio -> track.setEnabled(enabled)
+        }
+
+    public fun state(): RtcTrackState =
+        when (this) {
+            is Video -> track.state()
+            is Audio -> track.state()
+        }
+
+    internal fun sysHandle(): NativeMediaStreamTrackHandle =
+        when (this) {
+            is Video -> track.sysHandle()
+            is Audio -> track.sysHandle()
+        }
+
+    public companion object {
+        public fun from(track: RtcAudioTrack): MediaStreamTrack = Audio(track)
+
+        public fun from(track: RtcVideoTrack): MediaStreamTrack = Video(track)
+    }
 }

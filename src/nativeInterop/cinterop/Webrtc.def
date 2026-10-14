@@ -1,0 +1,4 @@
+headers = stddef.h stdint.h webrtc_wrapper.h
+headerFilter = webrtc_wrapper.h
+compilerOpts = -Isrc/nativeInterop/cinterop
+staticLibraries = webrtc_wrapper.a

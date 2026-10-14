@@ -1,11 +1,42 @@
 // port-lint: source rtp_receiver.rs
+// Copyright 2025 LiveKit, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package io.github.kotlinmania.libwebrtc
 
-public class RtpReceiver(
-    private val currentTrack: MediaStreamTrack? = null,
-    private val currentParameters: RtpParameters = RtpParameters(),
-) {
-    public fun track(): MediaStreamTrack? = currentTrack
+import io.github.kotlinmania.libwebrtc.native.RtpReceiver as ImpRtpReceiver
 
-    public fun parameters(): RtpParameters = currentParameters
+public class RtpReceiver internal constructor(
+    internal val handle: ImpRtpReceiver,
+) {
+    public constructor(
+        currentTrack: MediaStreamTrack? = null,
+        currentParameters: RtpParameters = RtpParameters(),
+    ) : this(
+        handle =
+            ImpRtpReceiver(
+                trackHandle = currentTrack?.sysHandle(),
+                currentParameters = currentParameters,
+            ),
+    )
+
+    public fun track(): MediaStreamTrack? = handle.track()
+
+    public fun getStats(): List<RtcStats> = handle.getStats()
+
+    public fun parameters(): RtpParameters = handle.parameters()
+
+    override fun toString(): String =
+        "RtpReceiver(track=${track()}, cname=${parameters().rtcp.cname})"
 }

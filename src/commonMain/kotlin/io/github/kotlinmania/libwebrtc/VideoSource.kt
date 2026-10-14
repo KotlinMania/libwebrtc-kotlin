@@ -15,29 +15,76 @@
 
 package io.github.kotlinmania.libwebrtc
 
-public data class VideoResolution(
-    public val width: UInt = 1280u,
-    public val height: UInt = 720u,
-)
+import io.github.kotlinmania.libwebrtc.native.NativeVideoSource as ImpNativeVideoSource
 
-public class NativeVideoSource(
-    private var resolution: VideoResolution = VideoResolution(),
-    public val isScreencast: Boolean = false,
+public class VideoResolution(
+    public val width: UInt = 0u,
+    public val height: UInt = 0u,
 ) {
-    public fun captureFrame(frame: VideoFrame) {
-        // capture video frame
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is VideoResolution) return false
+        return width == other.width && height == other.height
     }
 
-    public fun videoResolution(): VideoResolution = resolution
+    override fun hashCode(): Int = 31 * width.hashCode() + height.hashCode()
+
+    override fun toString(): String = "VideoResolution(width=$width, height=$height)"
+
+    public companion object {
+        public fun default(): VideoResolution = VideoResolution()
+    }
 }
 
 public sealed class RtcVideoSource {
     public class Native(
-        public val nativeSource: NativeVideoSource,
+        public val source: NativeVideoSource,
     ) : RtcVideoSource()
 
     public fun videoResolution(): VideoResolution =
         when (this) {
-            is Native -> nativeSource.videoResolution()
+            is Native -> source.videoResolution()
         }
+
+    public fun captureFrame(frame: VideoFrame) {
+        when (this) {
+            is Native -> source.captureFrame(frame)
+        }
+    }
+}
+
+public class NativeVideoSource internal constructor(
+    internal val handle: ImpNativeVideoSource,
+) {
+    public constructor(
+        resolution: VideoResolution = VideoResolution(),
+        isScreencast: Boolean = false,
+    ) : this(
+        handle = ImpNativeVideoSource.new(resolution = resolution, isScreencast = isScreencast),
+    )
+
+    public val isScreencast: Boolean
+        get() = handle.isScreencast
+
+    public fun captureFrame(frame: VideoFrame) {
+        handle.captureFrame(frame)
+    }
+
+    public fun videoResolution(): VideoResolution = handle.videoResolution()
+
+    public fun lastCapturedFrame(): VideoFrame? = handle.lastCapturedFrame()
+
+    override fun toString(): String = "NativeVideoSource"
+
+    public companion object {
+        public fun new(
+            resolution: VideoResolution,
+            isScreencast: Boolean = false,
+        ): NativeVideoSource =
+            NativeVideoSource(
+                handle = ImpNativeVideoSource.new(resolution = resolution, isScreencast = isScreencast),
+            )
+
+        public fun default(): NativeVideoSource = new(VideoResolution.default(), false)
+    }
 }

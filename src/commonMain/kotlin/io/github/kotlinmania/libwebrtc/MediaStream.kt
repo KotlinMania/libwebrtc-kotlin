@@ -15,29 +15,38 @@
 
 package io.github.kotlinmania.libwebrtc
 
-public class MediaStream(
-    public val id: String,
+import io.github.kotlinmania.libwebrtc.native.MediaStream as ImpMediaStream
+
+public class MediaStream internal constructor(
+    internal val handle: ImpMediaStream,
 ) {
-    private val audioTracksList: MutableList<RtcAudioTrack> = mutableListOf()
-    private val videoTracksList: MutableList<RtcVideoTrack> = mutableListOf()
+    public constructor(id: String) : this(handle = ImpMediaStream(streamId = id))
 
-    public fun audioTracks(): List<RtcAudioTrack> = audioTracksList.toList()
+    internal val id: String
+        get() = handle.id()
 
-    public fun videoTracks(): List<RtcVideoTrack> = videoTracksList.toList()
+    public fun id(): String = handle.id()
+
+    public fun audioTracks(): List<RtcAudioTrack> = handle.audioTracks()
+
+    public fun videoTracks(): List<RtcVideoTrack> = handle.videoTracks()
 
     public fun addTrack(track: RtcAudioTrack) {
-        audioTracksList.add(track)
+        handle.addAudioTrack(track.handle)
     }
 
     public fun addTrack(track: RtcVideoTrack) {
-        videoTracksList.add(track)
+        handle.addVideoTrack(track.handle)
     }
 
     public fun removeTrack(track: RtcAudioTrack) {
-        audioTracksList.remove(track)
+        handle.removeAudioTrack(track.handle)
     }
 
     public fun removeTrack(track: RtcVideoTrack) {
-        videoTracksList.remove(track)
+        handle.removeVideoTrack(track.handle)
     }
+
+    override fun toString(): String =
+        "MediaStream(id=${id()}, audioTracks=${audioTracks()}, videoTracks=${videoTracks()})"
 }
