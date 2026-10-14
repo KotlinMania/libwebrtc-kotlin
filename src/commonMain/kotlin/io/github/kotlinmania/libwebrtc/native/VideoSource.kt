@@ -41,8 +41,8 @@ internal class NativeVideoSource(
         inner.capturedFrames += 1
         WebrtcNativeBridge.videoSourceCaptureFrame(
             sourceHandle = nativeHandle,
-            width = frame.buffer.width.toInt(),
-            height = frame.buffer.height.toInt(),
+            width = frame.buffer.width().toInt(),
+            height = frame.buffer.height().toInt(),
             timestampUs = frame.timestampUs,
             rotation = frame.rotation.ordinal,
         )

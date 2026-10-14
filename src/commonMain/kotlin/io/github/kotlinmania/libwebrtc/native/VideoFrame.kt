@@ -20,10 +20,10 @@ import io.github.kotlinmania.libwebrtc.VideoBufferType
 import io.github.kotlinmania.libwebrtc.VideoFormatType
 
 internal fun newVideoFrameBuffer(buffer: VideoBuffer): VideoBuffer =
-    when (buffer.bufferType) {
+    when (buffer.bufferType()) {
         VideoBufferType.Native -> {
             io.github.kotlinmania.libwebrtc.NativeBuffer(
-                handle = NativeBuffer(bufferWidth = buffer.width, bufferHeight = buffer.height),
+                handle = NativeBuffer(bufferWidth = buffer.width(), bufferHeight = buffer.height()),
             )
         }
 
