@@ -56,18 +56,19 @@ internal class AudioMixerSourceImpl<T : AudioMixerSource>(
         }
 
         val srcChannels = frame.numChannels.toInt()
-        for (s in 0 until samplesCount) {
-            for (ch in 0 until targetChannels) {
-                val srcCh = if (ch < srcChannels) ch else 0
-                val sample = frame.data[s * srcChannels + srcCh].toInt()
-                val dstIdx = s * targetChannels + ch
-                val mixed = (outBuffer[dstIdx].toInt() + sample).coerceIn(
-                    Short.MIN_VALUE.toInt(),
-                    Short.MAX_VALUE.toInt(),
-                )
-                outBuffer[dstIdx] = mixed.toShort()
+        val totalTargetSamples = samplesCount * targetChannels
+        val channelMapped =
+            if (srcChannels == targetChannels) {
+                frame.data
+            } else {
+                ShortArray(totalTargetSamples) { idx ->
+                    val s = idx / targetChannels
+                    val ch = idx % targetChannels
+                    val srcCh = if (ch < srcChannels) ch else 0
+                    frame.data[s * srcChannels + srcCh]
+                }
             }
-        }
+        WebrtcNativeBridge.audioMixFrames(channelMapped, outBuffer, totalTargetSamples)
         return AudioFrameInfo.Normal
     }
 }

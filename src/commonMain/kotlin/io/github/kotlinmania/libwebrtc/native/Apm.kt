@@ -24,7 +24,13 @@ public class AudioProcessingModule(
     public val highPassFilterEnabled: Boolean,
     public val noiseSuppressionEnabled: Boolean,
 ) {
-    private var streamDelayMs: Int = 0
+    private val nativeHandle: Long =
+        WebrtcNativeBridge.apmCreate(
+            echoCanceller = echoCancellerEnabled,
+            gainController = gainControllerEnabled,
+            highPassFilter = highPassFilterEnabled,
+            noiseSuppression = noiseSuppressionEnabled,
+        )
 
     public fun processStream(
         data: ShortArray,
@@ -39,19 +45,9 @@ public class AudioProcessingModule(
             "slice must have a multiple of 10ms worth of samples"
         }
 
-        if (highPassFilterEnabled || noiseSuppressionEnabled || gainControllerEnabled) {
-            var offset = 0
-            while (offset < data.size) {
-                for (i in 0 until samplesPer10ms) {
-                    val idx = offset + i
-                    var sample = data[idx].toInt()
-                    if (noiseSuppressionEnabled && sample in -4..4) {
-                        sample = 0
-                    }
-                    data[idx] = sample.coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
-                }
-                offset += samplesPer10ms
-            }
+        val rc = WebrtcNativeBridge.apmProcessStream(nativeHandle, data, sampleRate, numChannels)
+        if (rc != 0) {
+            throw RtcError(RtcErrorType.Internal, "Failed to process stream")
         }
     }
 
@@ -67,16 +63,18 @@ public class AudioProcessingModule(
         require(samplesPer10ms > 0 && data.size % samplesPer10ms == 0 && data.size >= samplesPer10ms) {
             "slice must have a multiple of 10ms worth of samples"
         }
+
+        val rc = WebrtcNativeBridge.apmProcessReverseStream(nativeHandle, data, sampleRate, numChannels)
+        if (rc != 0) {
+            throw RtcError(RtcErrorType.Internal, "Failed to process reverse stream")
+        }
     }
 
     public fun setStreamDelayMs(delayMs: Int) {
-        if (delayMs < 0) {
+        if (WebrtcNativeBridge.apmSetStreamDelayMs(nativeHandle, delayMs) != 0) {
             throw RtcError(RtcErrorType.Internal, "Failed to set stream delay")
         }
-        streamDelayMs = delayMs
     }
-
-    public fun streamDelayMs(): Int = streamDelayMs
 
     public companion object {
         public fun new(

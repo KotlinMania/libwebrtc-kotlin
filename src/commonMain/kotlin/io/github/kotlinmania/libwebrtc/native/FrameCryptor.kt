@@ -114,10 +114,7 @@ public class KeyProvider(
         }
 
     private fun ratchetBytes(key: ByteArray, salt: ByteArray): ByteArray =
-        ByteArray(key.size) { i ->
-            val saltByte = if (salt.isNotEmpty()) salt[i % salt.size].toInt() else 0x5A
-            ((key[i].toInt() xor saltByte) + i + 1).toByte()
-        }
+        WebrtcNativeBridge.ratchetKey(key, salt)
 
     public companion object {
         public fun new(options: KeyProviderOptions): KeyProvider = KeyProvider(options)
@@ -139,6 +136,8 @@ public class FrameCryptor private constructor(
     private val participant: String,
     public val algorithm: EncryptionAlgorithm,
     public val keyProvider: KeyProvider,
+    internal val factoryHandle: Long = 0L,
+    internal val targetHandle: Long = 0L,
 ) {
     private val observer: RtcFrameCryptorObserver = RtcFrameCryptorObserver()
     private var isEnabled: Boolean = false
@@ -173,11 +172,14 @@ public class FrameCryptor private constructor(
             algorithm: EncryptionAlgorithm,
             keyProvider: KeyProvider,
             sender: RtpSender,
-        ): FrameCryptor {
-            peerFactory.toString()
-            sender.toString()
-            return FrameCryptor(participantId, algorithm, keyProvider)
-        }
+        ): FrameCryptor =
+            FrameCryptor(
+                participant = participantId,
+                algorithm = algorithm,
+                keyProvider = keyProvider,
+                factoryHandle = peerFactory.handle.nativeHandle,
+                targetHandle = sender.handle.nativeHandle,
+            )
 
         public fun newForRtpReceiver(
             peerFactory: PeerConnectionFactory,
@@ -185,11 +187,14 @@ public class FrameCryptor private constructor(
             algorithm: EncryptionAlgorithm,
             keyProvider: KeyProvider,
             receiver: RtpReceiver,
-        ): FrameCryptor {
-            peerFactory.toString()
-            receiver.toString()
-            return FrameCryptor(participantId, algorithm, keyProvider)
-        }
+        ): FrameCryptor =
+            FrameCryptor(
+                participant = participantId,
+                algorithm = algorithm,
+                keyProvider = keyProvider,
+                factoryHandle = peerFactory.handle.nativeHandle,
+                targetHandle = receiver.handle.nativeHandle,
+            )
     }
 }
 
@@ -210,11 +215,12 @@ public class DataPacketCryptor(
                 (key[idx % key.size].toInt() xor (keyIndex.toInt() + idx)).toByte()
             }
         val encrypted =
-            ByteArray(data.size) { idx ->
-                val k = key[idx % key.size].toInt()
-                val v = iv[idx % iv.size].toInt()
-                (data[idx].toInt() xor k xor v).toByte()
-            }
+            WebrtcNativeBridge.cryptorTransform(
+                algorithm = algorithm.ordinal,
+                key = key,
+                iv = iv,
+                input = data,
+            )
         return EncryptedPacket(data = encrypted, iv = iv, keyIndex = keyIndex)
     }
 
@@ -229,11 +235,12 @@ public class DataPacketCryptor(
         if (iv.isEmpty()) {
             throw RtcError(RtcErrorType.Internal, "Decryption failed: empty IV")
         }
-        return ByteArray(encryptedPacket.data.size) { idx ->
-            val k = key[idx % key.size].toInt()
-            val v = iv[idx % iv.size].toInt()
-            (encryptedPacket.data[idx].toInt() xor k xor v).toByte()
-        }
+        return WebrtcNativeBridge.cryptorTransform(
+            algorithm = algorithm.ordinal,
+            key = key,
+            iv = iv,
+            input = encryptedPacket.data,
+        )
     }
 
     public companion object {

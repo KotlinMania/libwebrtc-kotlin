@@ -26,6 +26,12 @@ internal class NativeVideoSource(
     private val resolution: VideoResolution = VideoResolution(),
     internal val isScreencast: Boolean = false,
 ) {
+    internal val nativeHandle: Long =
+        WebrtcNativeBridge.createVideoSource(
+            width = resolution.width.toInt(),
+            height = resolution.height.toInt(),
+            isScreencast = isScreencast,
+        )
     private val inner: VideoSourceInner = VideoSourceInner()
     private var lastFrame: VideoFrame? = null
 
@@ -33,6 +39,13 @@ internal class NativeVideoSource(
 
     internal fun captureFrame(frame: VideoFrame) {
         inner.capturedFrames += 1
+        WebrtcNativeBridge.videoSourceCaptureFrame(
+            sourceHandle = nativeHandle,
+            width = frame.buffer.width.toInt(),
+            height = frame.buffer.height.toInt(),
+            timestampUs = frame.timestampUs,
+            rotation = frame.rotation.ordinal,
+        )
         lastFrame = frame
     }
 

@@ -23,7 +23,7 @@ internal fun argbAssertSafety(
     width: Int,
     height: Int,
 ) {
-    width.toString()
+    require(width >= 0) { "width must be non-negative" }
     val heightAbs = abs(height).toUInt()
     val min = (srcStride * heightAbs).toInt()
     require(src.size >= min) { "src isn't large enough" }
@@ -39,7 +39,7 @@ internal fun i420AssertSafety(
     width: Int,
     height: Int,
 ) {
-    width.toString()
+    require(width >= 0) { "width must be non-negative" }
     val heightAbs = abs(height).toUInt()
     val chromaHeight = (heightAbs + 1u) / 2u
     val minY = (srcStrideY * heightAbs).toInt()
@@ -59,7 +59,7 @@ internal fun nv12AssertSafety(
     width: Int,
     height: Int,
 ) {
-    width.toString()
+    require(width >= 0) { "width must be non-negative" }
     val heightAbs = abs(height).toUInt()
     val chromaHeight = (heightAbs + 1u) / 2u
 
@@ -80,7 +80,7 @@ internal fun i444AssertSafety(
     width: Int,
     height: Int,
 ) {
-    width.toString()
+    require(width >= 0) { "width must be non-negative" }
     val heightAbs = abs(height).toUInt()
     val minY = (srcStrideY * heightAbs).toInt()
     val minU = (srcStrideU * heightAbs).toInt()
@@ -101,7 +101,7 @@ internal fun i422AssertSafety(
     width: Int,
     height: Int,
 ) {
-    width.toString()
+    require(width >= 0) { "width must be non-negative" }
     val heightAbs = abs(height).toUInt()
     val minY = (srcStrideY * heightAbs).toInt()
     val minU = (srcStrideU * heightAbs).toInt()
@@ -122,7 +122,7 @@ internal fun i010AssertSafety(
     width: Int,
     height: Int,
 ) {
-    width.toString()
+    require(width >= 0) { "width must be non-negative" }
     val heightAbs = abs(height).toUInt()
     val chromaHeight = heightAbs / 2u
     val minY = (srcStrideY * heightAbs).toInt() / 2
@@ -134,7 +134,7 @@ internal fun i010AssertSafety(
     require(srcV.size >= minV) { "src_v isn't large enough" }
 }
 
-private fun yuvToRgbPixel(y: Int, u: Int, v: Int): Triple<Int, Int, Int> {
+internal fun yuvToRgbPixel(y: Int, u: Int, v: Int): Triple<Int, Int, Int> {
     val c = y - 16
     val d = u - 128
     val e = v - 128
@@ -144,13 +144,13 @@ private fun yuvToRgbPixel(y: Int, u: Int, v: Int): Triple<Int, Int, Int> {
     return Triple(r, g, b)
 }
 
-private fun rgbToY(r: Int, g: Int, b: Int): Int =
+internal fun rgbToY(r: Int, g: Int, b: Int): Int =
     (((66 * r + 129 * g + 25 * b + 128) shr 8) + 16).coerceIn(0, 255)
 
-private fun rgbToU(r: Int, g: Int, b: Int): Int =
+internal fun rgbToU(r: Int, g: Int, b: Int): Int =
     (((-38 * r - 74 * g + 112 * b + 128) shr 8) + 128).coerceIn(0, 255)
 
-private fun rgbToV(r: Int, g: Int, b: Int): Int =
+internal fun rgbToV(r: Int, g: Int, b: Int): Int =
     (((112 * r - 94 * g - 18 * b + 128) shr 8) + 128).coerceIn(0, 255)
 
 public fun argbToRgb24(
@@ -163,20 +163,14 @@ public fun argbToRgb24(
 ) {
     argbAssertSafety(srcArgb, srcStrideArgb, width, height)
     argbAssertSafety(dstRgb24, dstStrideRgb24, width, height)
-    val h = abs(height)
-    val sStride = srcStrideArgb.toInt()
-    val dStride = dstStrideRgb24.toInt()
-    for (row in 0 until h) {
-        for (col in 0 until width) {
-            val sIdx = row * sStride + col * 4
-            val dIdx = row * dStride + col * 3
-            if (sIdx + 2 < srcArgb.size && dIdx + 2 < dstRgb24.size) {
-                dstRgb24[dIdx] = srcArgb[sIdx]
-                dstRgb24[dIdx + 1] = srcArgb[sIdx + 1]
-                dstRgb24[dIdx + 2] = srcArgb[sIdx + 2]
-            }
-        }
-    }
+    WebrtcNativeBridge.yuvArgbToRgb24(
+        srcArgb = srcArgb,
+        srcStrideArgb = srcStrideArgb.toInt(),
+        dstRgb24 = dstRgb24,
+        dstStrideRgb24 = dstStrideRgb24.toInt(),
+        width = width,
+        height = height,
+    )
 }
 
 public fun argbToI420(
@@ -193,24 +187,18 @@ public fun argbToI420(
 ) {
     i420AssertSafety(dstY, dstStrideY, dstU, dstStrideU, dstV, dstStrideV, width, height)
     argbAssertSafety(srcArgb, srcStrideArgb, width, height)
-    val h = abs(height)
-    val sStride = srcStrideArgb.toInt()
-    val yStride = dstStrideY.toInt()
-    val uStride = dstStrideU.toInt()
-    val vStride = dstStrideV.toInt()
-    for (row in 0 until h) {
-        for (col in 0 until width) {
-            val idx = row * sStride + col * 4
-            val b = srcArgb[idx].toInt() and 0xFF
-            val g = srcArgb[idx + 1].toInt() and 0xFF
-            val r = srcArgb[idx + 2].toInt() and 0xFF
-            dstY[row * yStride + col] = rgbToY(r, g, b).toByte()
-            if (row % 2 == 0 && col % 2 == 0) {
-                dstU[(row / 2) * uStride + (col / 2)] = rgbToU(r, g, b).toByte()
-                dstV[(row / 2) * vStride + (col / 2)] = rgbToV(r, g, b).toByte()
-            }
-        }
-    }
+    WebrtcNativeBridge.yuvArgbToI420(
+        srcArgb = srcArgb,
+        srcStrideArgb = srcStrideArgb.toInt(),
+        dstY = dstY,
+        dstStrideY = dstStrideY.toInt(),
+        dstU = dstU,
+        dstStrideU = dstStrideU.toInt(),
+        dstV = dstV,
+        dstStrideV = dstStrideV.toInt(),
+        width = width,
+        height = height,
+    )
 }
 
 public fun abgrToI420(
@@ -227,24 +215,18 @@ public fun abgrToI420(
 ) {
     i420AssertSafety(dstY, dstStrideY, dstU, dstStrideU, dstV, dstStrideV, width, height)
     argbAssertSafety(srcArgb, srcStrideArgb, width, height)
-    val h = abs(height)
-    val sStride = srcStrideArgb.toInt()
-    val yStride = dstStrideY.toInt()
-    val uStride = dstStrideU.toInt()
-    val vStride = dstStrideV.toInt()
-    for (row in 0 until h) {
-        for (col in 0 until width) {
-            val idx = row * sStride + col * 4
-            val r = srcArgb[idx].toInt() and 0xFF
-            val g = srcArgb[idx + 1].toInt() and 0xFF
-            val b = srcArgb[idx + 2].toInt() and 0xFF
-            dstY[row * yStride + col] = rgbToY(r, g, b).toByte()
-            if (row % 2 == 0 && col % 2 == 0) {
-                dstU[(row / 2) * uStride + (col / 2)] = rgbToU(r, g, b).toByte()
-                dstV[(row / 2) * vStride + (col / 2)] = rgbToV(r, g, b).toByte()
-            }
-        }
-    }
+    WebrtcNativeBridge.yuvAbgrToI420(
+        srcAbgr = srcArgb,
+        srcStrideAbgr = srcStrideArgb.toInt(),
+        dstY = dstY,
+        dstStrideY = dstStrideY.toInt(),
+        dstU = dstU,
+        dstStrideU = dstStrideU.toInt(),
+        dstV = dstV,
+        dstStrideV = dstStrideV.toInt(),
+        width = width,
+        height = height,
+    )
 }
 
 private fun convertI420ToFourCc(
@@ -262,47 +244,15 @@ private fun convertI420ToFourCc(
 ) {
     i420AssertSafety(srcY, srcStrideY, srcU, srcStrideU, srcV, srcStrideV, width, height)
     argbAssertSafety(dst, dstStride, width, height)
-    val h = abs(height)
-    val yStride = srcStrideY.toInt()
-    val uStride = srcStrideU.toInt()
-    val vStride = srcStrideV.toInt()
-    val dStride = dstStride.toInt()
-    for (row in 0 until h) {
-        for (col in 0 until width) {
-            val y = srcY[row * yStride + col].toInt() and 0xFF
-            val u = srcU[(row / 2) * uStride + (col / 2)].toInt() and 0xFF
-            val v = srcV[(row / 2) * vStride + (col / 2)].toInt() and 0xFF
-            val (r, g, b) = yuvToRgbPixel(y, u, v)
-            val dIdx = row * dStride + col * 4
-            if (dIdx + 3 < dst.size) {
-                when (order) {
-                    0 -> { // ARGB (little-endian BGRA in memory)
-                        dst[dIdx] = b.toByte()
-                        dst[dIdx + 1] = g.toByte()
-                        dst[dIdx + 2] = r.toByte()
-                        dst[dIdx + 3] = 0xFF.toByte()
-                    }
-                    1 -> { // BGRA (little-endian ARGB in memory)
-                        dst[dIdx] = 0xFF.toByte()
-                        dst[dIdx + 1] = r.toByte()
-                        dst[dIdx + 2] = g.toByte()
-                        dst[dIdx + 3] = b.toByte()
-                    }
-                    2 -> { // ABGR (little-endian RGBA in memory)
-                        dst[dIdx] = r.toByte()
-                        dst[dIdx + 1] = g.toByte()
-                        dst[dIdx + 2] = b.toByte()
-                        dst[dIdx + 3] = 0xFF.toByte()
-                    }
-                    else -> { // RGBA (little-endian ABGR in memory)
-                        dst[dIdx] = 0xFF.toByte()
-                        dst[dIdx + 1] = b.toByte()
-                        dst[dIdx + 2] = g.toByte()
-                        dst[dIdx + 3] = r.toByte()
-                    }
-                }
-            }
-        }
+    val sY = srcStrideY.toInt()
+    val sU = srcStrideU.toInt()
+    val sV = srcStrideV.toInt()
+    val dS = dstStride.toInt()
+    when (order) {
+        0 -> WebrtcNativeBridge.yuvI420ToArgb(srcY, sY, srcU, sU, srcV, sV, dst, dS, width, height)
+        1 -> WebrtcNativeBridge.yuvI420ToBgra(srcY, sY, srcU, sU, srcV, sV, dst, dS, width, height)
+        2 -> WebrtcNativeBridge.yuvI420ToAbgr(srcY, sY, srcU, sU, srcV, sV, dst, dS, width, height)
+        else -> WebrtcNativeBridge.yuvI420ToRgba(srcY, sY, srcU, sU, srcV, sV, dst, dS, width, height)
     }
 }
 
@@ -382,18 +332,20 @@ public fun i420ToNv12(
 ) {
     i420AssertSafety(srcY, srcStrideY, srcU, srcStrideU, srcV, srcStrideV, width, height)
     nv12AssertSafety(dstY, dstStrideY, dstUv, dstStrideUv, width, height)
-    val h = abs(height)
-    val chromaH = (h + 1) / 2
-    val chromaW = (width + 1) / 2
-    for (row in 0 until h) {
-        srcY.copyInto(dstY, row * dstStrideY.toInt(), row * srcStrideY.toInt(), row * srcStrideY.toInt() + width)
-    }
-    for (row in 0 until chromaH) {
-        for (col in 0 until chromaW) {
-            dstUv[row * dstStrideUv.toInt() + col * 2] = srcU[row * srcStrideU.toInt() + col]
-            dstUv[row * dstStrideUv.toInt() + col * 2 + 1] = srcV[row * srcStrideV.toInt() + col]
-        }
-    }
+    WebrtcNativeBridge.yuvI420ToNv12(
+        srcY = srcY,
+        srcStrideY = srcStrideY.toInt(),
+        srcU = srcU,
+        srcStrideU = srcStrideU.toInt(),
+        srcV = srcV,
+        srcStrideV = srcStrideV.toInt(),
+        dstY = dstY,
+        dstStrideY = dstStrideY.toInt(),
+        dstUv = dstUv,
+        dstStrideUv = dstStrideUv.toInt(),
+        width = width,
+        height = height,
+    )
 }
 
 public fun nv12ToI420(
@@ -412,18 +364,20 @@ public fun nv12ToI420(
 ) {
     nv12AssertSafety(srcY, srcStrideY, srcUv, srcStrideUv, width, height)
     i420AssertSafety(dstY, dstStrideY, dstU, dstStrideU, dstV, dstStrideV, width, height)
-    val h = abs(height)
-    val chromaH = (h + 1) / 2
-    val chromaW = (width + 1) / 2
-    for (row in 0 until h) {
-        srcY.copyInto(dstY, row * dstStrideY.toInt(), row * srcStrideY.toInt(), row * srcStrideY.toInt() + width)
-    }
-    for (row in 0 until chromaH) {
-        for (col in 0 until chromaW) {
-            dstU[row * dstStrideU.toInt() + col] = srcUv[row * srcStrideUv.toInt() + col * 2]
-            dstV[row * dstStrideV.toInt() + col] = srcUv[row * srcStrideUv.toInt() + col * 2 + 1]
-        }
-    }
+    WebrtcNativeBridge.yuvNv12ToI420(
+        srcY = srcY,
+        srcStrideY = srcStrideY.toInt(),
+        srcUv = srcUv,
+        srcStrideUv = srcStrideUv.toInt(),
+        dstY = dstY,
+        dstStrideY = dstStrideY.toInt(),
+        dstU = dstU,
+        dstStrideU = dstStrideU.toInt(),
+        dstV = dstV,
+        dstStrideV = dstStrideV.toInt(),
+        width = width,
+        height = height,
+    )
 }
 
 public fun i444ToI420(
@@ -542,37 +496,15 @@ public fun nv12ToArgb(
 ) {
     nv12AssertSafety(srcY, srcStrideY, srcUv, srcStrideUv, width, height)
     argbAssertSafety(dstArgb, dstStrideArgb, width, height)
-    val h = abs(height)
-    val chromaH = (h + 1) / 2
-    val chromaW = (width + 1) / 2
-    val yPlane = ByteArray(width * h)
-    val uPlane = ByteArray(chromaW * chromaH)
-    val vPlane = ByteArray(chromaW * chromaH)
-    nv12ToI420(
-        srcY,
-        srcStrideY,
-        srcUv,
-        srcStrideUv,
-        yPlane,
-        width.toUInt(),
-        uPlane,
-        chromaW.toUInt(),
-        vPlane,
-        chromaW.toUInt(),
-        width,
-        height,
-    )
-    i420ToArgb(
-        yPlane,
-        width.toUInt(),
-        uPlane,
-        chromaW.toUInt(),
-        vPlane,
-        chromaW.toUInt(),
-        dstArgb,
-        dstStrideArgb,
-        width,
-        height,
+    WebrtcNativeBridge.yuvNv12ToArgb(
+        srcY = srcY,
+        srcStrideY = srcStrideY.toInt(),
+        srcUv = srcUv,
+        srcStrideUv = srcStrideUv.toInt(),
+        dstArgb = dstArgb,
+        dstStrideArgb = dstStrideArgb.toInt(),
+        width = width,
+        height = height,
     )
 }
 
@@ -588,37 +520,15 @@ public fun nv12ToAbgr(
 ) {
     nv12AssertSafety(srcY, srcStrideY, srcUv, srcStrideUv, width, height)
     argbAssertSafety(dstAbgr, dstStrideAbgr, width, height)
-    val h = abs(height)
-    val chromaH = (h + 1) / 2
-    val chromaW = (width + 1) / 2
-    val yPlane = ByteArray(width * h)
-    val uPlane = ByteArray(chromaW * chromaH)
-    val vPlane = ByteArray(chromaW * chromaH)
-    nv12ToI420(
-        srcY,
-        srcStrideY,
-        srcUv,
-        srcStrideUv,
-        yPlane,
-        width.toUInt(),
-        uPlane,
-        chromaW.toUInt(),
-        vPlane,
-        chromaW.toUInt(),
-        width,
-        height,
-    )
-    i420ToAbgr(
-        yPlane,
-        width.toUInt(),
-        uPlane,
-        chromaW.toUInt(),
-        vPlane,
-        chromaW.toUInt(),
-        dstAbgr,
-        dstStrideAbgr,
-        width,
-        height,
+    WebrtcNativeBridge.yuvNv12ToAbgr(
+        srcY = srcY,
+        srcStrideY = srcStrideY.toInt(),
+        srcUv = srcUv,
+        srcStrideUv = srcStrideUv.toInt(),
+        dstAbgr = dstAbgr,
+        dstStrideAbgr = dstStrideAbgr.toInt(),
+        width = width,
+        height = height,
     )
 }
 

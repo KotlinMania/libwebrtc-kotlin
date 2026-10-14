@@ -19,23 +19,34 @@ import io.github.kotlinmania.libwebrtc.RtcTrackState
 
 internal class RtcAudioTrack(
     private val trackId: String,
-    private var trackEnabled: Boolean = true,
-    private var trackState: RtcTrackState = RtcTrackState.Live,
+    trackEnabled: Boolean = true,
+    trackState: RtcTrackState = RtcTrackState.Live,
+    factoryHandle: Long = 0L,
+    sourceHandle: Long = 0L,
 ) {
-    internal fun id(): String = trackId
+    internal val nativeHandle: Long = WebrtcNativeBridge.createAudioTrack(factoryHandle, trackId, sourceHandle)
 
-    internal fun enabled(): Boolean = trackEnabled
-
-    internal fun setEnabled(enabled: Boolean): Boolean {
-        val prev = trackEnabled
-        trackEnabled = enabled
-        return prev
+    init {
+        if (!trackEnabled) {
+            WebrtcNativeBridge.trackSetEnabled(nativeHandle, false)
+        }
+        if (trackState != RtcTrackState.Live) {
+            WebrtcNativeBridge.trackSetState(nativeHandle, trackState.ordinal)
+        }
     }
 
-    internal fun state(): RtcTrackState = trackState
+    internal fun id(): String = trackId
+
+    internal fun enabled(): Boolean = WebrtcNativeBridge.trackEnabled(nativeHandle)
+
+    internal fun setEnabled(enabled: Boolean): Boolean =
+        WebrtcNativeBridge.trackSetEnabled(nativeHandle, enabled)
+
+    internal fun state(): RtcTrackState =
+        if (WebrtcNativeBridge.trackState(nativeHandle) == 0) RtcTrackState.Live else RtcTrackState.Ended
 
     internal fun setState(newState: RtcTrackState) {
-        trackState = newState
+        WebrtcNativeBridge.trackSetState(nativeHandle, newState.ordinal)
     }
 
     internal fun sysHandle(): NativeMediaStreamTrackHandle =

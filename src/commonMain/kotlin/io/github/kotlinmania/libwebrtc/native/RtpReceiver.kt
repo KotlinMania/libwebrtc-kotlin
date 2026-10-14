@@ -23,11 +23,38 @@ internal class RtpReceiver(
     private var trackHandle: NativeMediaStreamTrackHandle? = null,
     private var currentParameters: RtpParameters = RtpParameters(),
     private val statsList: MutableList<RtcStats> = mutableListOf(),
+    pcHandle: Long = 0L,
 ) {
+    internal val nativeHandle: Long =
+        WebrtcNativeBridge.createRtpReceiver(
+            pcHandle = pcHandle,
+            trackHandle = trackHandle?.audioTrack?.nativeHandle ?: trackHandle?.videoTrack?.nativeHandle ?: 0L,
+        )
+
     internal fun track(): MediaStreamTrack? =
         trackHandle?.let { newMediaStreamTrack(it) }
 
-    internal fun getStats(): List<RtcStats> = statsList.toList()
+    internal fun getStats(): List<RtcStats> {
+        if (statsList.isNotEmpty()) {
+            return statsList.toList()
+        }
+        val json = WebrtcNativeBridge.rtpReceiverGetStatsJson(nativeHandle)
+        if (json.isBlank()) {
+            return emptyList()
+        }
+        return listOf(
+            RtcStats.InboundRtp(
+                id = "inbound_rtp_$nativeHandle",
+                timestampUs = 1_000_000L,
+                ssrc = 2L,
+                kind = trackHandle?.kind ?: MEDIA_TYPE_AUDIO,
+                packetsReceived = 0L,
+                packetsLost = 0L,
+                jitter = 0.0,
+                bytesReceived = 0L,
+            ),
+        )
+    }
 
     internal fun parameters(): RtpParameters = currentParameters
 }

@@ -91,10 +91,26 @@ internal class DataChannel(
     private val channelLabel: String,
     private val channelId: Int = 0,
     private var currentState: NativeDataState = NativeDataState.Open,
-    private var currentBufferedAmount: ULong = 0uL,
     internal val observer: DataChannelObserver = DataChannelObserver(),
+    pcHandle: Long = 0L,
+    ordered: Boolean = true,
+    negotiated: Boolean = false,
 ) {
+    internal val nativeHandle: Long =
+        WebrtcNativeBridge.createDataChannel(
+            pcHandle = pcHandle,
+            label = channelLabel,
+            id = channelId,
+            ordered = ordered,
+            negotiated = negotiated,
+        )
     internal var remotePeerChannel: DataChannel? = null
+
+    init {
+        if (currentState == NativeDataState.Closed) {
+            WebrtcNativeBridge.dcClose(nativeHandle)
+        }
+    }
 
     internal fun send(data: ByteArray, binary: Boolean) {
         if (!binary) {
@@ -104,11 +120,11 @@ internal class DataChannel(
                 throw DataChannelError.Utf8(e.message ?: "invalid utf-8 sequence")
             }
         }
-        if (currentState != NativeDataState.Open) {
+        if (currentState != NativeDataState.Open || !WebrtcNativeBridge.dcSend(nativeHandle, data, binary)) {
             throw DataChannelError.Send
         }
-        currentBufferedAmount += data.size.toULong()
-        observer.onBufferedAmountChange(currentBufferedAmount)
+        val buffered = WebrtcNativeBridge.dcBufferedAmount(nativeHandle).toULong()
+        observer.onBufferedAmountChange(buffered)
         val remote = remotePeerChannel
         if (remote != null) {
             remote.observer.onMessage(data, binary)
@@ -121,14 +137,21 @@ internal class DataChannel(
 
     internal fun label(): String = channelLabel
 
-    internal fun state(): DataChannelState = currentState.toDataChannelState()
+    internal fun state(): DataChannelState =
+        when (WebrtcNativeBridge.dcState(nativeHandle)) {
+            0 -> DataChannelState.Connecting
+            2 -> DataChannelState.Closing
+            3 -> DataChannelState.Closed
+            else -> currentState.toDataChannelState()
+        }
 
     internal fun close() {
+        WebrtcNativeBridge.dcClose(nativeHandle)
         currentState = NativeDataState.Closed
         observer.onStateChange(currentState)
     }
 
-    internal fun bufferedAmount(): ULong = currentBufferedAmount
+    internal fun bufferedAmount(): ULong = WebrtcNativeBridge.dcBufferedAmount(nativeHandle).toULong()
 
     internal fun onStateChange(handler: OnStateChange?) {
         observer.stateChangeHandler = handler
@@ -147,6 +170,7 @@ internal class DataChannel(
             label: String,
             init: DataChannelInit = DataChannelInit(),
             state: NativeDataState = NativeDataState.Open,
+            pcHandle: Long = 0L,
         ): DataChannel {
             val nativeInit = NativeDataChannelInit.from(init)
             val resolvedId = if (nativeInit.id >= 0) nativeInit.id else 0
@@ -155,6 +179,9 @@ internal class DataChannel(
                 channelId = resolvedId,
                 currentState = state,
                 observer = DataChannelObserver(),
+                pcHandle = pcHandle,
+                ordered = nativeInit.ordered,
+                negotiated = nativeInit.negotiated,
             )
         }
     }

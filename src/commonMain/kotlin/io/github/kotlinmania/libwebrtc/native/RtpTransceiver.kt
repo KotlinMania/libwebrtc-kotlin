@@ -15,6 +15,7 @@
 
 package io.github.kotlinmania.libwebrtc.native
 
+import io.github.kotlinmania.libwebrtc.MediaType
 import io.github.kotlinmania.libwebrtc.RtpCodecCapability
 import io.github.kotlinmania.libwebrtc.RtpTransceiverDirection
 import io.github.kotlinmania.libwebrtc.RtpTransceiverInit
@@ -39,14 +40,25 @@ internal class RtpTransceiver(
     private val receiverHandle: RtpReceiver = RtpReceiver(),
     private var transceiverDirection: RtpTransceiverDirection = RtpTransceiverDirection.SendRecv,
     private var transceiverMid: String? = null,
+    pcHandle: Long = 0L,
+    mediaType: MediaType = MediaType.Audio,
 ) {
+    internal val nativeHandle: Long =
+        WebrtcNativeBridge.createRtpTransceiver(
+            pcHandle = pcHandle,
+            mediaType = mediaType.ordinal,
+            direction = transceiverDirection.ordinal,
+        )
     private var codecPreferences: List<NativeRtpCodecCapability> = emptyList()
 
     internal fun mid(): String? = transceiverMid
 
-    internal fun currentDirection(): RtpTransceiverDirection? = transceiverDirection
+    internal fun currentDirection(): RtpTransceiverDirection? = direction()
 
-    internal fun direction(): RtpTransceiverDirection = transceiverDirection
+    internal fun direction(): RtpTransceiverDirection =
+        RtpTransceiverDirection.entries.getOrElse(WebrtcNativeBridge.rtpTransceiverDirection(nativeHandle)) {
+            transceiverDirection
+        }
 
     internal fun sender(): io.github.kotlinmania.libwebrtc.RtpSender =
         io.github.kotlinmania.libwebrtc.RtpSender(handle = senderHandle)
@@ -59,6 +71,7 @@ internal class RtpTransceiver(
     }
 
     internal fun stop() {
+        WebrtcNativeBridge.rtpTransceiverStop(nativeHandle)
         transceiverDirection = RtpTransceiverDirection.Stopped
     }
 }

@@ -22,6 +22,11 @@ internal class VideoTrackObserver(
     private val frameQueue: ArrayDeque<VideoFrame>,
     private val isClosedProvider: () -> Boolean,
 ) {
+    internal var discardedFrames: Int = 0
+        private set
+    internal var lastConstraints: Any? = null
+        private set
+
     internal fun onFrame(frame: VideoFrame) {
         if (!isClosedProvider()) {
             frameQueue.addLast(
@@ -35,11 +40,11 @@ internal class VideoTrackObserver(
     }
 
     internal fun onDiscardedFrame() {
-        // Notification of discarded video frame.
+        discardedFrames += 1
     }
 
     internal fun onConstraintsChanged(constraints: Any) {
-        constraints.toString()
+        lastConstraints = constraints
     }
 }
 

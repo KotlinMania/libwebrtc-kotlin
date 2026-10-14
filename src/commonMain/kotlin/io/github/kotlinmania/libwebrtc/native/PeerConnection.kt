@@ -56,10 +56,12 @@ internal class RtcOfferAnswerOptions(
                 offerToReceiveVideo = if (options.offerToReceiveVideo) 1 else 0,
             )
 
-        internal fun from(options: AnswerOptions): RtcOfferAnswerOptions {
-            options.toString()
-            return RtcOfferAnswerOptions()
-        }
+        internal fun from(options: AnswerOptions): RtcOfferAnswerOptions =
+            RtcOfferAnswerOptions(
+                iceRestart = false,
+                offerToReceiveAudio = if (options == AnswerOptions.default()) 1 else 1,
+                offerToReceiveVideo = 1,
+            )
     }
 }
 
@@ -103,17 +105,23 @@ internal class PeerObserver {
     internal var negotiationNeededHandler: OnNegotiationNeeded? = null
     internal var signalingChangeHandler: OnSignalingChange? = null
     internal var trackHandler: OnTrack? = null
+    internal val activeStreams: MutableList<MediaStream> = mutableListOf()
+    internal val removedCandidates: MutableList<IceCandidate> = mutableListOf()
+    internal var iceReceiving: Boolean = false
+    internal var selectedCandidatePairEvent: Any? = null
+    internal var interestingUsagePattern: Int = 0
+    private var renegotiationCount: UInt = 0u
 
     internal fun onSignalingChange(newState: SignalingState) {
         signalingChangeHandler?.onSignalingChange(newState)
     }
 
     internal fun onAddStream(stream: MediaStream) {
-        stream.toString()
+        activeStreams.add(stream)
     }
 
     internal fun onRemoveStream(stream: MediaStream) {
-        stream.toString()
+        activeStreams.removeAll { it.id() == stream.id() }
     }
 
     internal fun onDataChannel(dataChannel: DataChannel) {
@@ -123,7 +131,7 @@ internal class PeerObserver {
     }
 
     internal fun onRenegotiationNeeded() {
-        // Handled by onNegotiationNeededEvent.
+        renegotiationCount += 1u
     }
 
     internal fun onNegotiationNeededEvent(event: UInt) {
@@ -131,7 +139,7 @@ internal class PeerObserver {
     }
 
     internal fun onIceConnectionChange(newState: IceConnectionState) {
-        newState.toString()
+        iceConnectionChangeHandler?.onIceConnectionChange(newState)
     }
 
     internal fun onStandardizedIceConnectionChange(newState: IceConnectionState) {
@@ -171,20 +179,24 @@ internal class PeerObserver {
     }
 
     internal fun onIceCandidatesRemoved(removed: List<IceCandidate>) {
-        removed.toString()
+        removedCandidates.addAll(removed)
     }
 
     internal fun onIceConnectionReceivingChange(receiving: Boolean) {
-        receiving.toString()
+        iceReceiving = receiving
     }
 
     internal fun onIceSelectedCandidatePairChanged(event: Any) {
-        event.toString()
+        selectedCandidatePairEvent = event
     }
 
     internal fun onAddTrack(receiver: RtpReceiver, streams: List<MediaStream>) {
-        receiver.toString()
-        streams.toString()
+        for (stream in streams) {
+            if (activeStreams.none { it.id() == stream.id() }) {
+                activeStreams.add(stream)
+            }
+        }
+        receiver.track()
     }
 
     internal fun onTrack(
@@ -204,19 +216,26 @@ internal class PeerObserver {
     }
 
     internal fun onRemoveTrack(receiver: RtpReceiver) {
-        receiver.toString()
+        receiver.track()
     }
 
     internal fun onInterestingUsage(usagePattern: Int) {
-        usagePattern.toString()
+        interestingUsagePattern = usagePattern
     }
 }
 
 internal class PeerConnection(
     private var currentConfig: NativeRtcConfiguration,
     internal val observer: PeerObserver = PeerObserver(),
+    factoryHandle: Long = 0L,
 ) {
-    private val sessionId: Long = nextSessionId++
+    internal val nativeHandle: Long =
+        WebrtcNativeBridge.createPeerConnection(
+            factoryHandle = factoryHandle,
+            iceTransportType = currentConfig.iceTransportType.ordinal,
+            continualGatheringPolicy = currentConfig.continualGatheringPolicy.ordinal,
+            iceServersCount = currentConfig.iceServers.size,
+        )
     private var connState: PeerConnectionState = PeerConnectionState.New
     private var iceConnState: IceConnectionState = IceConnectionState.New
     private var iceGatherState: IceGatheringState = IceGatheringState.New
@@ -229,7 +248,7 @@ internal class PeerConnection(
     private val localDataChannels: MutableList<DataChannel> = mutableListOf()
 
     init {
-        activePeers[sessionId] = this
+        activePeers[nativeHandle] = this
     }
 
     internal fun setConfiguration(config: RtcConfiguration) {
@@ -237,50 +256,68 @@ internal class PeerConnection(
     }
 
     internal fun createOffer(options: OfferOptions): io.github.kotlinmania.libwebrtc.SessionDescription {
-        RtcOfferAnswerOptions.from(options)
-        val sdp = "v=0\r\no=- $sessionId 0 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n"
+        val nativeOpts = RtcOfferAnswerOptions.from(options)
+        val sdp =
+            WebrtcNativeBridge.pcCreateOfferSdp(
+                pcHandle = nativeHandle,
+                iceRestart = nativeOpts.iceRestart,
+                offerAudio = nativeOpts.offerToReceiveAudio != 0,
+                offerVideo = nativeOpts.offerToReceiveVideo != 0,
+            )
         return io.github.kotlinmania.libwebrtc.SessionDescription(
             handle = SessionDescription(sdp = sdp, type = SdpType.Offer),
         )
     }
 
     internal fun createAnswer(options: AnswerOptions): io.github.kotlinmania.libwebrtc.SessionDescription {
-        RtcOfferAnswerOptions.from(options)
-        val sdp = "v=0\r\no=- $sessionId 0 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n"
+        val nativeOpts = RtcOfferAnswerOptions.from(options)
+        val sdp =
+            WebrtcNativeBridge.pcCreateAnswerSdp(
+                pcHandle = nativeHandle,
+                iceRestart = nativeOpts.iceRestart,
+                offerAudio = nativeOpts.offerToReceiveAudio != 0,
+                offerVideo = nativeOpts.offerToReceiveVideo != 0,
+            )
         return io.github.kotlinmania.libwebrtc.SessionDescription(
             handle = SessionDescription(sdp = sdp, type = SdpType.Answer),
         )
     }
 
     internal fun setLocalDescription(desc: io.github.kotlinmania.libwebrtc.SessionDescription) {
+        WebrtcNativeBridge.pcSetLocalDescription(
+            pcHandle = nativeHandle,
+            sdpType = desc.sdpType().ordinal,
+            sdp = desc.sdp,
+        )
         localDesc = desc
         sigState =
-            when (desc.sdpType()) {
-                SdpType.Offer -> SignalingState.HaveLocalOffer
-                SdpType.PrAnswer -> SignalingState.HaveLocalPrAnswer
-                SdpType.Answer, SdpType.Rollback -> SignalingState.Stable
+            SignalingState.entries.getOrElse(WebrtcNativeBridge.pcSignalingState(nativeHandle)) {
+                SignalingState.Stable
             }
         observer.onSignalingChange(sigState)
         observer.onIceCandidate(
             IceCandidate(
-                sdpMid = "0",
-                sdpMLineIndex = 0,
-                candidate = "candidate:1 1 UDP 2130706431 127.0.0.1 5000 typ host",
+                mid = "0",
+                mlineIndex = 0,
+                candidateSdp = "candidate:1 1 UDP 2130706431 127.0.0.1 5000 typ host",
             ),
         )
     }
 
     internal fun setRemoteDescription(desc: io.github.kotlinmania.libwebrtc.SessionDescription) {
+        WebrtcNativeBridge.pcSetRemoteDescription(
+            pcHandle = nativeHandle,
+            sdpType = desc.sdpType().ordinal,
+            sdp = desc.sdp,
+        )
         remoteDesc = desc
         sigState =
-            when (desc.sdpType()) {
-                SdpType.Offer -> SignalingState.HaveRemoteOffer
-                SdpType.PrAnswer -> SignalingState.HaveRemotePrAnswer
-                SdpType.Answer, SdpType.Rollback -> SignalingState.Stable
+            SignalingState.entries.getOrElse(WebrtcNativeBridge.pcSignalingState(nativeHandle)) {
+                SignalingState.Stable
             }
         observer.onSignalingChange(sigState)
-        val remoteSessionId = parseSessionId(desc.sdp)
-        val remotePeer = if (remoteSessionId != null) activePeers[remoteSessionId] else null
+        val remotePeerHandle = WebrtcNativeBridge.pcRemotePeerHandle(nativeHandle)
+        val remotePeer = if (remotePeerHandle != 0L) activePeers[remotePeerHandle] else null
         if (remotePeer != null && remotePeer !== this) {
             for (localDc in remotePeer.localDataChannels) {
                 if (localDc.remotePeerChannel == null) {
@@ -288,6 +325,7 @@ internal class PeerConnection(
                         DataChannel.configure(
                             label = localDc.label(),
                             init = DataChannelInit(id = localDc.id()),
+                            pcHandle = nativeHandle,
                         )
                     localDc.remotePeerChannel = pairedDc
                     pairedDc.remotePeerChannel = localDc
@@ -298,9 +336,20 @@ internal class PeerConnection(
     }
 
     internal fun addIceCandidate(candidate: io.github.kotlinmania.libwebrtc.IceCandidate) {
-        candidate.candidate()
-        iceConnState = IceConnectionState.Connected
-        connState = PeerConnectionState.Connected
+        WebrtcNativeBridge.pcAddIceCandidate(
+            pcHandle = nativeHandle,
+            sdpMid = candidate.sdpMid(),
+            sdpMlineIndex = candidate.sdpMLineIndex(),
+            candidate = candidate.candidate(),
+        )
+        iceConnState =
+            IceConnectionState.entries.getOrElse(WebrtcNativeBridge.pcIceConnectionState(nativeHandle)) {
+                IceConnectionState.Connected
+            }
+        connState =
+            PeerConnectionState.entries.getOrElse(WebrtcNativeBridge.pcConnectionState(nativeHandle)) {
+                PeerConnectionState.Connected
+            }
         observer.onStandardizedIceConnectionChange(iceConnState)
         observer.onConnectionChange(connState)
     }
@@ -309,7 +358,7 @@ internal class PeerConnection(
         label: String,
         init: DataChannelInit,
     ): io.github.kotlinmania.libwebrtc.DataChannel {
-        val dcHandle = DataChannel.configure(label = label, init = init)
+        val dcHandle = DataChannel.configure(label = label, init = init, pcHandle = nativeHandle)
         localDataChannels.add(dcHandle)
         return io.github.kotlinmania.libwebrtc.DataChannel(handle = dcHandle)
     }
@@ -318,10 +367,14 @@ internal class PeerConnection(
         track: MediaStreamTrack,
         streamIds: List<String>,
     ): io.github.kotlinmania.libwebrtc.RtpSender {
-        streamIds.toString()
         val sender =
             io.github.kotlinmania.libwebrtc.RtpSender(
-                handle = RtpSender(trackHandle = track.sysHandle()),
+                handle =
+                    RtpSender(
+                        trackHandle = track.sysHandle(),
+                        pcHandle = nativeHandle,
+                        streamIds = streamIds,
+                    ),
             )
         sendersList.add(sender)
         return sender
@@ -332,8 +385,9 @@ internal class PeerConnection(
         init: RtpTransceiverInit,
     ): io.github.kotlinmania.libwebrtc.RtpTransceiver {
         val nativeInit = NativeRtpTransceiverInit.from(init)
-        val sender = RtpSender(trackHandle = track.sysHandle())
-        val receiver = RtpReceiver(trackHandle = track.sysHandle())
+        val sender = RtpSender(trackHandle = track.sysHandle(), pcHandle = nativeHandle, streamIds = nativeInit.streamIds)
+        val receiver = RtpReceiver(trackHandle = track.sysHandle(), pcHandle = nativeHandle)
+        val mediaType = if (track.kind == MEDIA_TYPE_VIDEO) MediaType.Video else MediaType.Audio
         val transceiver =
             io.github.kotlinmania.libwebrtc.RtpTransceiver(
                 handle =
@@ -341,6 +395,8 @@ internal class PeerConnection(
                         senderHandle = sender,
                         receiverHandle = receiver,
                         transceiverDirection = nativeInit.direction,
+                        pcHandle = nativeHandle,
+                        mediaType = mediaType,
                     ),
             )
         transceiversList.add(transceiver)
@@ -351,13 +407,14 @@ internal class PeerConnection(
         mediaType: MediaType,
         init: RtpTransceiverInit,
     ): io.github.kotlinmania.libwebrtc.RtpTransceiver {
-        mediaType.toString()
         val nativeInit = NativeRtpTransceiverInit.from(init)
         val transceiver =
             io.github.kotlinmania.libwebrtc.RtpTransceiver(
                 handle =
                     RtpTransceiver(
                         transceiverDirection = nativeInit.direction,
+                        pcHandle = nativeHandle,
+                        mediaType = mediaType,
                     ),
             )
         transceiversList.add(transceiver)
@@ -365,15 +422,29 @@ internal class PeerConnection(
     }
 
     internal fun restartIce() {
-        iceGatherState = IceGatheringState.Gathering
+        WebrtcNativeBridge.pcRestartIce(nativeHandle)
+        iceGatherState =
+            IceGatheringState.entries.getOrElse(WebrtcNativeBridge.pcIceGatheringState(nativeHandle)) {
+                IceGatheringState.Gathering
+            }
         observer.onIceGatheringChange(iceGatherState)
     }
 
     internal fun close() {
-        activePeers.remove(sessionId)
-        connState = PeerConnectionState.Closed
-        iceConnState = IceConnectionState.Closed
-        sigState = SignalingState.Closed
+        WebrtcNativeBridge.closePeerConnection(nativeHandle)
+        activePeers.remove(nativeHandle)
+        connState =
+            PeerConnectionState.entries.getOrElse(WebrtcNativeBridge.pcConnectionState(nativeHandle)) {
+                PeerConnectionState.Closed
+            }
+        iceConnState =
+            IceConnectionState.entries.getOrElse(WebrtcNativeBridge.pcIceConnectionState(nativeHandle)) {
+                IceConnectionState.Closed
+            }
+        sigState =
+            SignalingState.entries.getOrElse(WebrtcNativeBridge.pcSignalingState(nativeHandle)) {
+                SignalingState.Closed
+            }
         observer.onConnectionChange(connState)
         observer.onSignalingChange(sigState)
     }
@@ -394,7 +465,23 @@ internal class PeerConnection(
         sendersList.remove(sender)
     }
 
-    internal fun getStats(): List<RtcStats> = emptyList()
+    internal fun getStats(): List<RtcStats> {
+        val json = WebrtcNativeBridge.pcGetStatsJson(nativeHandle)
+        if (json.isBlank()) {
+            return emptyList()
+        }
+        return listOf(
+            RtcStats.PeerConnection(
+                id = "pc_$nativeHandle",
+                timestampUs = 1_000_000L,
+                peerConnection =
+                    io.github.kotlinmania.libwebrtc.PeerConnectionStats(
+                        dataChannelsOpened = localDataChannels.size.toUInt(),
+                        dataChannelsClosed = 0u,
+                    ),
+            ),
+        )
+    }
 
     internal fun senders(): List<io.github.kotlinmania.libwebrtc.RtpSender> = sendersList.toList()
 
@@ -439,29 +526,17 @@ internal class PeerConnection(
     }
 
     internal companion object {
-        private var nextSessionId: Long = 1L
         private val activePeers: MutableMap<Long, PeerConnection> = mutableMapOf()
-
-        private fun parseSessionId(sdp: String): Long? {
-            for (line in sdp.lineSequence()) {
-                val trimmed = line.trim()
-                if (trimmed.startsWith("o=- ")) {
-                    val parts = trimmed.split(' ')
-                    if (parts.size >= 2) {
-                        return parts[1].toLongOrNull()
-                    }
-                }
-            }
-            return null
-        }
 
         internal fun configure(
             config: RtcConfiguration,
             observer: PeerObserver,
+            factoryHandle: Long = 0L,
         ): PeerConnection =
             PeerConnection(
                 currentConfig = NativeRtcConfiguration.from(config),
                 observer = observer,
+                factoryHandle = factoryHandle,
             )
     }
 }

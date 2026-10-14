@@ -60,13 +60,15 @@ internal class DesktopCapturer private constructor(
 ) {
     private var callbackWrapper: DesktopCallback? = null
     private var selectedSourceId: ULong? = null
-    private val sources: List<CaptureSource> =
-        listOf(
-            CaptureSource(sourceId = 1uL, sourceTitle = "Primary Display", sourceDisplayId = 0L),
-        )
 
     internal fun captureFrame() {
         val cb = callbackWrapper ?: return
+        val rgba =
+            WebrtcNativeBridge.desktopCapturerCaptureRgba(
+                sourceId = (selectedSourceId ?: 1uL).toLong(),
+                width = 64,
+                height = 64,
+            )
         val frame =
             DesktopFrame.new(
                 width = 64,
@@ -74,7 +76,7 @@ internal class DesktopCapturer private constructor(
                 stride = 256u,
                 left = 0,
                 top = 0,
-                data = ByteArray(256 * 64),
+                data = rgba,
             )
         cb.onCaptureResult(frame, null)
     }
@@ -84,14 +86,24 @@ internal class DesktopCapturer private constructor(
     }
 
     internal fun selectSource(id: ULong): Boolean {
-        val exists = sources.any { it.id() == id } || id == 0uL
+        val exists = getSourceList().any { it.id() == id } || id == 0uL
         if (exists) {
             selectedSourceId = id
         }
         return exists
     }
 
-    internal fun getSourceList(): List<CaptureSource> = sources.toList()
+    internal fun getSourceList(): List<CaptureSource> {
+        val typeOrd = options.sourceType.ordinal
+        val count = WebrtcNativeBridge.desktopCapturerSourceCount(typeOrd)
+        return List(count.coerceAtLeast(0)) { index ->
+            CaptureSource(
+                sourceId = WebrtcNativeBridge.desktopCapturerSourceId(typeOrd, index).toULong(),
+                sourceTitle = WebrtcNativeBridge.desktopCapturerSourceTitle(typeOrd, index),
+                sourceDisplayId = index.toLong(),
+            )
+        }
+    }
 
     internal companion object {
         internal fun new(options: DesktopCapturerOptions): DesktopCapturer? {

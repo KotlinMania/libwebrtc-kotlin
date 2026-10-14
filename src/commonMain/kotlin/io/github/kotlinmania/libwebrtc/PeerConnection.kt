@@ -120,26 +120,6 @@ public class TrackEvent(
     public val transceiver: RtpTransceiver,
 )
 
-public interface PeerConnectionObserver {
-    public fun onConnectionStateChange(state: PeerConnectionState) {}
-
-    public fun onDataChannel(dataChannel: DataChannel) {}
-
-    public fun onIceCandidate(candidate: IceCandidate) {}
-
-    public fun onIceCandidateError(error: IceCandidateError) {}
-
-    public fun onIceConnectionStateChange(state: IceConnectionState) {}
-
-    public fun onIceGatheringStateChange(state: IceGatheringState) {}
-
-    public fun onNegotiationNeeded(event: UInt) {}
-
-    public fun onSignalingStateChange(state: SignalingState) {}
-
-    public fun onTrack(event: TrackEvent) {}
-}
-
 public class PeerConnection internal constructor(
     internal val handle: ImpPeerConnection,
 ) {
@@ -275,30 +255,6 @@ public class PeerConnection internal constructor(
 
     public fun onTrack(handler: OnTrack?) {
         handle.onTrack(handler)
-    }
-
-    public fun registerObserver(observer: PeerConnectionObserver?) {
-        if (observer == null) {
-            onConnectionStateChange(null)
-            onDataChannel(null)
-            onIceCandidate(null)
-            onIceCandidateError(null)
-            onIceConnectionStateChange(null)
-            onIceGatheringStateChange(null)
-            onNegotiationNeeded(null)
-            onSignalingStateChange(null)
-            onTrack(null)
-        } else {
-            onConnectionStateChange { observer.onConnectionStateChange(it) }
-            onDataChannel { observer.onDataChannel(it) }
-            onIceCandidate { observer.onIceCandidate(it) }
-            onIceCandidateError { observer.onIceCandidateError(it) }
-            onIceConnectionStateChange { observer.onIceConnectionStateChange(it) }
-            onIceGatheringStateChange { observer.onIceGatheringStateChange(it) }
-            onNegotiationNeeded { observer.onNegotiationNeeded(it) }
-            onSignalingStateChange { observer.onSignalingStateChange(it) }
-            onTrack { observer.onTrack(it) }
-        }
     }
 
     override fun toString(): String =

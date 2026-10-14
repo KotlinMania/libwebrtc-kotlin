@@ -11,6 +11,6 @@ class PeerConnectionFactoryTest {
         val source = NativeVideoSource.default()
         val track = factory.createVideoTrack("test", source)
         assertEquals("test", track.id())
-        assertEquals(TrackState.Live, track.state())
+        assertEquals(RtcTrackState.Live, track.state())
     }
 }

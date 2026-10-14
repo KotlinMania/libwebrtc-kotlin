@@ -30,6 +30,8 @@ private fun ensureLogSink() {
 internal class PeerConnectionFactory(
     internal val hasPlatformAdm: Boolean = false,
 ) {
+    internal val nativeHandle: Long = WebrtcNativeBridge.createPeerConnectionFactory()
+
     init {
         ensureLogSink()
     }
@@ -39,7 +41,12 @@ internal class PeerConnectionFactory(
     ): io.github.kotlinmania.libwebrtc.PeerConnection {
         val observer = PeerObserver()
         return io.github.kotlinmania.libwebrtc.PeerConnection(
-            handle = PeerConnection.configure(config = config, observer = observer),
+            handle =
+                PeerConnection.configure(
+                    config = config,
+                    observer = observer,
+                    factoryHandle = nativeHandle,
+                ),
         )
     }
 
@@ -47,9 +54,14 @@ internal class PeerConnectionFactory(
         label: String,
         source: io.github.kotlinmania.libwebrtc.NativeVideoSource,
     ): io.github.kotlinmania.libwebrtc.RtcVideoTrack {
-        source.handle.sysHandle()
+        val sysSource = source.handle.sysHandle()
         return io.github.kotlinmania.libwebrtc.RtcVideoTrack(
-            handle = RtcVideoTrack(trackId = label),
+            handle =
+                RtcVideoTrack(
+                    trackId = label,
+                    factoryHandle = nativeHandle,
+                    sourceHandle = sysSource.nativeHandle,
+                ),
         )
     }
 
@@ -57,9 +69,14 @@ internal class PeerConnectionFactory(
         label: String,
         source: io.github.kotlinmania.libwebrtc.NativeAudioSource,
     ): io.github.kotlinmania.libwebrtc.RtcAudioTrack {
-        source.handle.sysHandle()
+        val sysSource = source.handle.sysHandle()
         return io.github.kotlinmania.libwebrtc.RtcAudioTrack(
-            handle = RtcAudioTrack(trackId = label),
+            handle =
+                RtcAudioTrack(
+                    trackId = label,
+                    factoryHandle = nativeHandle,
+                    sourceHandle = sysSource.nativeHandle,
+                ),
         )
     }
 
@@ -69,14 +86,39 @@ internal class PeerConnectionFactory(
         )
 
     internal fun getRtpSenderCapabilities(mediaType: MediaType): RtpCapabilities {
-        mediaType.toString()
-        return NativeRtpCapabilities().toRtpCapabilities()
+        val codecs =
+            when (mediaType) {
+                MediaType.Audio ->
+                    listOf(
+                        NativeRtpCodecCapability(
+                            name = "opus",
+                            kind = MediaType.Audio,
+                            mimeType = "audio/opus",
+                            hasClockRate = true,
+                            clockRate = 48_000,
+                            hasNumChannels = true,
+                            numChannels = 2,
+                        ),
+                    )
+                MediaType.Video ->
+                    listOf(
+                        NativeRtpCodecCapability(
+                            name = "VP8",
+                            kind = MediaType.Video,
+                            mimeType = "video/VP8",
+                            hasClockRate = true,
+                            clockRate = 90_000,
+                            hasNumChannels = false,
+                            numChannels = 0,
+                        ),
+                    )
+                MediaType.Data, MediaType.Unsupported -> emptyList()
+            }
+        return NativeRtpCapabilities(codecs = codecs).toRtpCapabilities()
     }
 
-    internal fun getRtpReceiverCapabilities(mediaType: MediaType): RtpCapabilities {
-        mediaType.toString()
-        return NativeRtpCapabilities().toRtpCapabilities()
-    }
+    internal fun getRtpReceiverCapabilities(mediaType: MediaType): RtpCapabilities =
+        getRtpSenderCapabilities(mediaType)
 
     internal companion object {
         internal fun default(): PeerConnectionFactory {

@@ -39,44 +39,17 @@ public class AudioResampler {
 
         val dstSamplesPerCh = ((samplesPerChannel.toLong() * dstSampleRate.toLong()) / sampleRate.toLong()).toInt()
         val out = ShortArray(dstSamplesPerCh * dstCh)
-
-        for (dstFrame in 0 until dstSamplesPerCh) {
-            val srcPos =
-                if (dstSamplesPerCh <= 1) {
-                    0.0
-                } else {
-                    (dstFrame.toDouble() * (srcSamplesPerCh - 1).coerceAtLeast(0)) / (dstSamplesPerCh - 1)
-                }
-            val idx0 = srcPos.toInt().coerceIn(0, srcSamplesPerCh - 1)
-            val idx1 = (idx0 + 1).coerceIn(0, srcSamplesPerCh - 1)
-            val frac = srcPos - idx0
-
-            for (ch in 0 until dstCh) {
-                val sample0: Double
-                val sample1: Double
-                if (srcCh == dstCh) {
-                    sample0 = src[idx0 * srcCh + ch].toDouble()
-                    sample1 = src[idx1 * srcCh + ch].toDouble()
-                } else if (dstCh == 1) {
-                    var sum0 = 0.0
-                    var sum1 = 0.0
-                    for (c in 0 until srcCh) {
-                        sum0 += src[idx0 * srcCh + c].toDouble()
-                        sum1 += src[idx1 * srcCh + c].toDouble()
-                    }
-                    sample0 = sum0 / srcCh
-                    sample1 = sum1 / srcCh
-                } else {
-                    val mappedCh = ch % srcCh
-                    sample0 = src[idx0 * srcCh + mappedCh].toDouble()
-                    sample1 = src[idx1 * srcCh + mappedCh].toDouble()
-                }
-                val interpolated = (sample0 + (sample1 - sample0) * frac).toInt()
-                out[dstFrame * dstCh + ch] =
-                    interpolated.coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
-            }
-        }
-        buffer = out
+        val written =
+            WebrtcNativeBridge.audioResample(
+                src = src,
+                numFrames = srcSamplesPerCh,
+                numChannels = srcCh,
+                srcRate = sampleRate.toInt(),
+                dstChannels = dstCh,
+                dstRate = dstSampleRate.toInt(),
+                dst = out,
+            )
+        buffer = if (written == out.size) out else out.copyOf(written.coerceIn(0, out.size))
         return buffer
     }
 

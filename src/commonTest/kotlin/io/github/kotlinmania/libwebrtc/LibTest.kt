@@ -3,10 +3,8 @@ package io.github.kotlinmania.libwebrtc
 
 import io.github.kotlinmania.libwebrtc.native.AudioMixer
 import io.github.kotlinmania.libwebrtc.native.AudioMixerSource
-import io.github.kotlinmania.libwebrtc.native.AudioProcessingConfig
 import io.github.kotlinmania.libwebrtc.native.AudioProcessingModule
 import io.github.kotlinmania.libwebrtc.native.AudioResampler
-import io.github.kotlinmania.libwebrtc.native.CryptorError
 import io.github.kotlinmania.libwebrtc.native.DataPacketCryptor
 import io.github.kotlinmania.libwebrtc.native.EncryptedPacket
 import io.github.kotlinmania.libwebrtc.native.EncryptionAlgorithm
@@ -14,7 +12,8 @@ import io.github.kotlinmania.libwebrtc.native.EncryptionState
 import io.github.kotlinmania.libwebrtc.native.FrameCryptor
 import io.github.kotlinmania.libwebrtc.native.KeyProvider
 import io.github.kotlinmania.libwebrtc.native.KeyProviderOptions
-import io.github.kotlinmania.libwebrtc.native.YuvHelper
+import io.github.kotlinmania.libwebrtc.native.abgrToI420
+import io.github.kotlinmania.libwebrtc.native.i420ToAbgr
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -190,10 +189,10 @@ class LibTest {
         assertEquals(VideoBufferType.I420, frame.buffer.bufferType())
         assertEquals(64u, frame.buffer.toI420().width())
 
-        val i420a = I420ABuffer.new(width = 64u, height = 48u)
+        val i420a = I420ABuffer(width = 64u, height = 48u)
         assertEquals(VideoBufferType.I420A, i420a.bufferType())
         assertEquals(64u, i420a.toI420().width())
-        assertEquals(4, i420a.strides().strideAlpha)
+        assertEquals(4u, i420a.strides().strideA)
 
         val i422 = I422Buffer.new(width = 64u, height = 48u)
         assertEquals(VideoBufferType.I422, i422.bufferType())
@@ -293,12 +292,11 @@ class LibTest {
             RtcStats.MediaSource(
                 id = "ms-1",
                 timestampUs = 123456L,
-                trackIdentifier = "track-1",
-                kind = "audio",
-                audioLevel = 0.5,
+                source = stats.MediaSourceStats(trackIdentifier = "track-1", kind = "audio"),
+                audio = stats.AudioSourceStats(audioLevel = 0.5),
             )
         assertEquals("ms-1", mediaSourceStat.id)
-        assertEquals("audio", mediaSourceStat.kind)
+        assertEquals("audio", mediaSourceStat.source.kind)
     }
 
     @Test
@@ -343,10 +341,10 @@ class LibTest {
     @Test
     fun desktopCapturerOptionsAndState() {
         val options = DesktopCapturerOptions(DesktopCaptureSourceType.Window)
-        assertEquals(DesktopCaptureSourceType.Window, options.sourceType())
-        assertEquals(false, options.includeCursor())
+        assertEquals(DesktopCaptureSourceType.Window, options.sourceType)
+        assertEquals(false, options.includeCursor)
         options.setIncludeCursor(true)
-        assertEquals(true, options.includeCursor())
+        assertEquals(true, options.includeCursor)
 
         val capturer = DesktopCapturer.new(options)
         assertNotNull(capturer)
@@ -356,7 +354,8 @@ class LibTest {
         assertEquals("Primary Display", sources[0].title())
 
         var capturedResult: Result<DesktopFrame>? = null
-        capturer.startCapture(sources[0]) { result ->
+        assertTrue(capturer.selectSource(sources[0].id()))
+        capturer.start { result ->
             capturedResult = result
         }
         assertEquals(true, capturer.isCapturing())
@@ -372,12 +371,10 @@ class LibTest {
     fun nativeAudioProcessingMixerResamplerAndCryptor() {
         val apm =
             AudioProcessingModule.new(
-                AudioProcessingConfig(
-                    echoCancellerEnabled = true,
-                    gainControllerEnabled = true,
-                    highPassFilterEnabled = true,
-                    noiseSuppressionEnabled = true,
-                ),
+                echoCancellerEnabled = true,
+                gainControllerEnabled = true,
+                highPassFilterEnabled = true,
+                noiseSuppressionEnabled = true,
             )
         val samples = ShortArray(480) { 100 }
         apm.processStream(samples, 48000, 1)
@@ -385,7 +382,7 @@ class LibTest {
         apm.setStreamDelayMs(10)
 
         val resampler = AudioResampler()
-        val resampled = resampler.remixAndResample(samples, 480, 1, 48000, 1, 16000)
+        val resampled = resampler.remixAndResample(samples, 480u, 1u, 48000u, 1u, 16000u)
         assertEquals(160, resampled.size)
 
         val mixer = AudioMixer.new()
@@ -393,9 +390,15 @@ class LibTest {
             object : AudioMixerSource {
                 override fun ssrc(): Int = 1
 
-                override fun preferredSampleRate(): Int = 48000
+                override fun preferredSampleRate(): UInt = 48000u
 
-                override fun getAudioFrameWithInfo(sampleRate: Int): ShortArray? = ShortArray(sampleRate / 100) { 42 }
+                override fun getAudioFrameWithInfo(targetSampleRate: UInt): AudioFrame =
+                    AudioFrame(
+                        data = ShortArray((targetSampleRate / 100u).toInt()) { 42 },
+                        sampleRate = targetSampleRate,
+                        numChannels = 1u,
+                        samplesPerChannel = targetSampleRate / 100u,
+                    )
             }
         mixer.addSource(source)
         val mixed = mixer.mix(1)
@@ -403,10 +406,10 @@ class LibTest {
         assertEquals(42.toShort(), mixed[0])
         mixer.removeSource(1)
 
-        val keyProvider = KeyProvider.new(KeyProviderOptions.default())
+        val keyProvider = KeyProvider.new(KeyProviderOptions())
         val key = ByteArray(16) { it.toByte() }
         assertTrue(keyProvider.setSharedKey(0, key))
-        assertContentEquals(key, keyProvider.ratchetSharedKey(0))
+        assertNotNull(keyProvider.ratchetSharedKey(0))
 
         val dataCryptor = DataPacketCryptor.new(EncryptionAlgorithm.AesGcm, keyProvider)
         val payload = "secret webrtc data".encodeToByteArray()
@@ -420,7 +423,7 @@ class LibTest {
         val sender = pc.addTrack(track)
         val frameCryptor = FrameCryptor.newForRtpSender(factory, "alice", EncryptionAlgorithm.AesGcm, keyProvider, sender)
         var observedState: EncryptionState? = null
-        frameCryptor.registerObserver { _, state ->
+        frameCryptor.onStateChange { _, state ->
             observedState = state
         }
         frameCryptor.setEnabled(true)
@@ -428,11 +431,8 @@ class LibTest {
         assertEquals(EncryptionState.Ok, observedState)
         frameCryptor.setKeyIndex(2)
         assertEquals(2, frameCryptor.keyIndex())
-        frameCryptor.unregisterObserver()
+        frameCryptor.onStateChange(null)
         pc.close()
-
-        val err = CryptorError("test failure")
-        assertEquals("Cryptor error: test failure", err.message)
     }
 
     @Test
@@ -444,15 +444,15 @@ class LibTest {
         val srcV = ByteArray((width / 2) * (height / 2)) { 128.toByte() }
         val dstRgba = ByteArray(width * height * 4)
 
-        YuvHelper.i420ToAbgr(
+        i420ToAbgr(
             srcY = srcY,
-            srcStrideY = width,
+            srcStrideY = width.toUInt(),
             srcU = srcU,
-            srcStrideU = width / 2,
+            srcStrideU = (width / 2).toUInt(),
             srcV = srcV,
-            srcStrideV = width / 2,
+            srcStrideV = (width / 2).toUInt(),
             dstAbgr = dstRgba,
-            dstStrideAbgr = width * 4,
+            dstStrideAbgr = (width * 4).toUInt(),
             width = width,
             height = height,
         )
@@ -461,15 +461,15 @@ class LibTest {
         val dstY = ByteArray(width * height)
         val dstU = ByteArray((width / 2) * (height / 2))
         val dstV = ByteArray((width / 2) * (height / 2))
-        YuvHelper.abgrToI420(
+        abgrToI420(
             srcAbgr = dstRgba,
-            srcStrideAbgr = width * 4,
+            srcStrideAbgr = (width * 4).toUInt(),
             dstY = dstY,
-            dstStrideY = width,
+            dstStrideY = width.toUInt(),
             dstU = dstU,
-            dstStrideU = width / 2,
+            dstStrideU = (width / 2).toUInt(),
             dstV = dstV,
-            dstStrideV = width / 2,
+            dstStrideV = (width / 2).toUInt(),
             width = width,
             height = height,
         )

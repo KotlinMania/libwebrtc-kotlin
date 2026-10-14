@@ -2,12 +2,10 @@
 package io.github.kotlinmania.libwebrtc
 
 import io.github.kotlinmania.libwebrtc.native.AudioFrameQueue
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-@OptIn(ExperimentalAtomicApi::class)
 class AudioStreamTest {
     private fun testFrame(marker: Short): AudioFrame =
         AudioFrame(
@@ -41,7 +39,7 @@ class AudioStreamTest {
         queue.push(testFrame(2))
         queue.push(testFrame(3))
 
-        assertEquals(1uL, queue.droppedFrames.load())
+        assertEquals(1uL, queue.droppedFrames)
         assertEquals(2.toShort(), popMarker(queue))
         assertEquals(3.toShort(), popMarker(queue))
         assertNull(popMarker(queue))
@@ -59,7 +57,7 @@ class AudioStreamTest {
             assertEquals(marker.toShort(), popMarker(queue))
         }
         assertNull(popMarker(queue))
-        assertEquals(0uL, queue.droppedFrames.load())
+        assertEquals(0uL, queue.droppedFrames)
     }
 
     @Test

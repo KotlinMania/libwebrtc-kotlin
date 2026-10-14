@@ -25,6 +25,14 @@ internal class NativeAudioSource(
     private val sourceSampleRate: UInt,
     private val sourceNumChannels: UInt,
     private val queueSizeSamples: UInt,
+    internal val nativeHandle: Long =
+        WebrtcNativeBridge.createAudioSource(
+            sampleRate = sourceSampleRate.toInt(),
+            numChannels = sourceNumChannels.toInt(),
+            echoCancellation = currentOptions.echoCancellation,
+            noiseSuppression = currentOptions.noiseSuppression,
+            autoGainControl = currentOptions.autoGainControl,
+        ),
 ) {
     private val bufferedFrames: MutableList<AudioFrame> = mutableListOf()
 
@@ -91,6 +99,20 @@ internal class NativeAudioSource(
                     "direct capture requires 10ms frames: got $nbFrames frames, expected $expectedFramesPerCh",
                 )
             }
+            val ok =
+                WebrtcNativeBridge.audioSourceCaptureFrame(
+                    sourceHandle = nativeHandle,
+                    samples = frame.data,
+                    sampleRate = sourceSampleRate.toInt(),
+                    numChannels = numCh,
+                    samplesPerChannel = nbFrames,
+                )
+            if (!ok) {
+                throw RtcError(
+                    RtcErrorType.InvalidState,
+                    "failed to capture frame without buffering",
+                )
+            }
             bufferedFrames.add(frame)
             return
         }
@@ -101,6 +123,20 @@ internal class NativeAudioSource(
             val end = (offset + chunkSize).coerceAtMost(frame.data.size)
             val chunk = frame.data.copyOfRange(offset, end)
             val nbFrames = chunk.size / numCh
+            val ok =
+                WebrtcNativeBridge.audioSourceCaptureFrame(
+                    sourceHandle = nativeHandle,
+                    samples = chunk,
+                    sampleRate = sourceSampleRate.toInt(),
+                    numChannels = numCh,
+                    samplesPerChannel = nbFrames,
+                )
+            if (!ok) {
+                throw RtcError(
+                    RtcErrorType.InvalidState,
+                    "failed to capture frame",
+                )
+            }
             bufferedFrames.add(
                 AudioFrame(
                     data = chunk,
