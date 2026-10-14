@@ -542,12 +542,12 @@ internal actual object WebrtcNativeBridge {
     actual fun desktopCapturerSourceId(
         sourceType: Int,
         index: Int,
-    ): Long = if (sourceType == 1) (1000L + index) else (1L + index)
+    ): Long = (index + 1).toLong()
 
     actual fun desktopCapturerSourceTitle(
         sourceType: Int,
         index: Int,
-    ): String = if (sourceType == 1) "Primary Window" else "Primary Screen"
+    ): String = if (sourceType == 1) "Application Window" else "Primary Display"
 
     actual fun desktopCapturerCaptureRgba(
         sourceId: Long,
