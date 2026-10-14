@@ -88,7 +88,7 @@ internal class PeerConnectionFactory(
     internal fun getRtpSenderCapabilities(mediaType: MediaType): RtpCapabilities {
         val codecs =
             when (mediaType) {
-                MediaType.Audio ->
+                MediaType.Audio -> {
                     listOf(
                         NativeRtpCodecCapability(
                             name = "opus",
@@ -100,7 +100,9 @@ internal class PeerConnectionFactory(
                             numChannels = 2,
                         ),
                     )
-                MediaType.Video ->
+                }
+
+                MediaType.Video -> {
                     listOf(
                         NativeRtpCodecCapability(
                             name = "VP8",
@@ -112,7 +114,11 @@ internal class PeerConnectionFactory(
                             numChannels = 0,
                         ),
                     )
-                MediaType.Data, MediaType.Unsupported -> emptyList()
+                }
+
+                MediaType.Data, MediaType.Unsupported -> {
+                    emptyList()
+                }
             }
         return NativeRtpCapabilities(codecs = codecs).toRtpCapabilities()
     }

@@ -655,4 +655,3 @@ public typealias MediaPlayoutStats = RtcStats.MediaPlayout
 public typealias LocalCandidateStats = RtcStats.LocalCandidate
 public typealias RemoteCandidateStats = RtcStats.RemoteCandidate
 public typealias TrackStats = RtcStats.Track
-

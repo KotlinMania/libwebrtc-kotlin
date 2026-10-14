@@ -16,8 +16,8 @@
 package io.github.kotlinmania.libwebrtc.native
 
 import io.github.kotlinmania.libwebrtc.MediaStreamTrack
-import io.github.kotlinmania.libwebrtc.RtpParameters
 import io.github.kotlinmania.libwebrtc.RtcStats
+import io.github.kotlinmania.libwebrtc.RtpParameters
 
 internal class RtpSender(
     private var trackHandle: NativeMediaStreamTrackHandle? = null,

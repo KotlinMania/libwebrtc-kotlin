@@ -126,7 +126,8 @@ internal class PeerObserver {
 
     internal fun onDataChannel(dataChannel: DataChannel) {
         dataChannelHandler?.onDataChannel(
-            io.github.kotlinmania.libwebrtc.DataChannel(handle = dataChannel),
+            io.github.kotlinmania.libwebrtc
+                .DataChannel(handle = dataChannel),
         )
     }
 
@@ -156,7 +157,8 @@ internal class PeerObserver {
 
     internal fun onIceCandidate(candidate: IceCandidate) {
         iceCandidateHandler?.onIceCandidate(
-            io.github.kotlinmania.libwebrtc.IceCandidate(handle = candidate),
+            io.github.kotlinmania.libwebrtc
+                .IceCandidate(handle = candidate),
         )
     }
 
@@ -208,9 +210,15 @@ internal class PeerObserver {
         trackHandler?.onTrack(
             TrackEvent(
                 receiver = receiver,
-                streams = streams.map { io.github.kotlinmania.libwebrtc.MediaStream(handle = it) },
+                streams =
+                    streams.map {
+                        io.github.kotlinmania.libwebrtc
+                            .MediaStream(handle = it)
+                    },
                 track = track,
-                transceiver = io.github.kotlinmania.libwebrtc.RtpTransceiver(handle = transceiver),
+                transceiver =
+                    io.github.kotlinmania.libwebrtc
+                        .RtpTransceiver(handle = transceiver),
             ),
         )
     }
@@ -360,7 +368,8 @@ internal class PeerConnection(
     ): io.github.kotlinmania.libwebrtc.DataChannel {
         val dcHandle = DataChannel.configure(label = label, init = init, pcHandle = nativeHandle)
         localDataChannels.add(dcHandle)
-        return io.github.kotlinmania.libwebrtc.DataChannel(handle = dcHandle)
+        return io.github.kotlinmania.libwebrtc
+            .DataChannel(handle = dcHandle)
     }
 
     internal fun addTrack(

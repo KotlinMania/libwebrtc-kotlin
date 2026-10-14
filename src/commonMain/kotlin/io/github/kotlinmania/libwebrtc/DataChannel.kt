@@ -15,8 +15,8 @@
 
 package io.github.kotlinmania.libwebrtc
 
-import io.github.kotlinmania.libwebrtc.native.DataChannel as ImpDataChannel
 import io.github.kotlinmania.libwebrtc.native.NativeDataState
+import io.github.kotlinmania.libwebrtc.native.DataChannel as ImpDataChannel
 
 public fun interface OnStateChange {
     public fun onStateChange(state: DataChannelState)

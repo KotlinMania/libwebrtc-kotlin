@@ -98,7 +98,8 @@ internal class WebGlBuffer(
     private val bufferWidth: Int,
     private val bufferHeight: Int,
     internal val tex: Any = Any(),
-) : VideoFrameBuffer, VideoBuffer {
+) : VideoFrameBuffer,
+    VideoBuffer {
     override val width: UInt
         get() = bufferWidth.toUInt()
 
@@ -113,7 +114,8 @@ internal class WebGlBuffer(
     override fun height(): Int = bufferHeight
 
     override fun toI420(): io.github.kotlinmania.libwebrtc.I420Buffer =
-        io.github.kotlinmania.libwebrtc.I420Buffer.new(bufferWidth.toUInt(), bufferHeight.toUInt())
+        io.github.kotlinmania.libwebrtc.I420Buffer
+            .new(bufferWidth.toUInt(), bufferHeight.toUInt())
 
     override fun toArgb(
         format: VideoFormatType,
@@ -274,7 +276,8 @@ internal class NV12Buffer(
     private val bufferHeight: Int = 0,
     private val yPlane: ByteArray = ByteArray((bufferWidth * bufferHeight).coerceAtLeast(0)),
     private val uvPlane: ByteArray = ByteArray((((bufferWidth + 1) / 2) * 2 * ((bufferHeight + 1) / 2)).coerceAtLeast(0)),
-) : PlanarYuvBuffer, BiplanarYuv8Buffer {
+) : PlanarYuvBuffer,
+    BiplanarYuv8Buffer {
     override fun width(): Int = bufferWidth
 
     override fun height(): Int = bufferHeight

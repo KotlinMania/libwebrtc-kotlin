@@ -194,13 +194,19 @@ internal actual object WebrtcNativeBridge {
         s.localSdp = sdp
         s.iceGatheringState = 2
         when (sdpType) {
-            0 -> s.signalingState = 1
+            0 -> {
+                s.signalingState = 1
+            }
+
             2, 1 -> {
                 s.signalingState = 0
                 s.connectionState = 2
                 s.iceConnectionState = 2
             }
-            3 -> s.signalingState = 0
+
+            3 -> {
+                s.signalingState = 0
+            }
         }
         return true
     }
@@ -220,7 +226,10 @@ internal actual object WebrtcNativeBridge {
             pcs[remoteHandle]?.remoteHandle = pcHandle
         }
         when (sdpType) {
-            0 -> s.signalingState = 3
+            0 -> {
+                s.signalingState = 3
+            }
+
             2, 1 -> {
                 s.signalingState = 0
                 s.connectionState = 2
@@ -231,7 +240,10 @@ internal actual object WebrtcNativeBridge {
                     r.signalingState = 0
                 }
             }
-            3 -> s.signalingState = 0
+
+            3 -> {
+                s.signalingState = 0
+            }
         }
         return true
     }

@@ -21,17 +21,39 @@ import io.github.kotlinmania.libwebrtc.VideoFormatType
 
 internal fun newVideoFrameBuffer(buffer: VideoBuffer): VideoBuffer =
     when (buffer.bufferType) {
-        VideoBufferType.Native ->
+        VideoBufferType.Native -> {
             io.github.kotlinmania.libwebrtc.NativeBuffer(
                 handle = NativeBuffer(bufferWidth = buffer.width, bufferHeight = buffer.height),
             )
-        VideoBufferType.I420 -> buffer
-        VideoBufferType.I420A -> buffer
-        VideoBufferType.I422 -> buffer
-        VideoBufferType.I444 -> buffer
-        VideoBufferType.I010 -> buffer
-        VideoBufferType.NV12 -> buffer
-        VideoBufferType.WebGl -> buffer
+        }
+
+        VideoBufferType.I420 -> {
+            buffer
+        }
+
+        VideoBufferType.I420A -> {
+            buffer
+        }
+
+        VideoBufferType.I422 -> {
+            buffer
+        }
+
+        VideoBufferType.I444 -> {
+            buffer
+        }
+
+        VideoBufferType.I010 -> {
+            buffer
+        }
+
+        VideoBufferType.NV12 -> {
+            buffer
+        }
+
+        VideoBufferType.WebGl -> {
+            buffer
+        }
     }
 
 internal class NativeBuffer(

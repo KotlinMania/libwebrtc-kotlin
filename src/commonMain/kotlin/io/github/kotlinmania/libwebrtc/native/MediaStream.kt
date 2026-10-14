@@ -23,10 +23,16 @@ internal class MediaStream(
     internal fun id(): String = streamId
 
     internal fun audioTracks(): List<io.github.kotlinmania.libwebrtc.RtcAudioTrack> =
-        audioTrackHandles.map { io.github.kotlinmania.libwebrtc.RtcAudioTrack(handle = it) }
+        audioTrackHandles.map {
+            io.github.kotlinmania.libwebrtc
+                .RtcAudioTrack(handle = it)
+        }
 
     internal fun videoTracks(): List<io.github.kotlinmania.libwebrtc.RtcVideoTrack> =
-        videoTrackHandles.map { io.github.kotlinmania.libwebrtc.RtcVideoTrack(handle = it) }
+        videoTrackHandles.map {
+            io.github.kotlinmania.libwebrtc
+                .RtcVideoTrack(handle = it)
+        }
 
     internal fun addAudioTrack(track: RtcAudioTrack) {
         audioTrackHandles.add(track)

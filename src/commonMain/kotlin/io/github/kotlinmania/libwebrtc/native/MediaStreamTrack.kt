@@ -44,11 +44,21 @@ internal fun newMediaStreamTrack(sysHandle: NativeMediaStreamTrackHandle): Media
     when (sysHandle.kind) {
         MEDIA_TYPE_AUDIO -> {
             val handle = sysHandle.audioTrack ?: RtcAudioTrack(sysHandle.id)
-            MediaStreamTrack.Audio(io.github.kotlinmania.libwebrtc.RtcAudioTrack(handle = handle))
+            MediaStreamTrack.Audio(
+                io.github.kotlinmania.libwebrtc
+                    .RtcAudioTrack(handle = handle),
+            )
         }
+
         MEDIA_TYPE_VIDEO -> {
             val handle = sysHandle.videoTrack ?: RtcVideoTrack(sysHandle.id)
-            MediaStreamTrack.Video(io.github.kotlinmania.libwebrtc.RtcVideoTrack(handle = handle))
+            MediaStreamTrack.Video(
+                io.github.kotlinmania.libwebrtc
+                    .RtcVideoTrack(handle = handle),
+            )
         }
-        else -> error("unknown track kind: ${sysHandle.kind}")
+
+        else -> {
+            error("unknown track kind: ${sysHandle.kind}")
+        }
     }

@@ -61,10 +61,12 @@ internal class RtpTransceiver(
         }
 
     internal fun sender(): io.github.kotlinmania.libwebrtc.RtpSender =
-        io.github.kotlinmania.libwebrtc.RtpSender(handle = senderHandle)
+        io.github.kotlinmania.libwebrtc
+            .RtpSender(handle = senderHandle)
 
     internal fun receiver(): io.github.kotlinmania.libwebrtc.RtpReceiver =
-        io.github.kotlinmania.libwebrtc.RtpReceiver(handle = receiverHandle)
+        io.github.kotlinmania.libwebrtc
+            .RtpReceiver(handle = receiverHandle)
 
     internal fun setCodecPreferences(codecs: List<RtpCodecCapability>) {
         codecPreferences = codecs.map { NativeRtpCodecCapability.from(it) }
