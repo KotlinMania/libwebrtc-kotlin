@@ -185,8 +185,7 @@ internal class NativeRtpCodecCapability(
                         } else {
                             StringKeyValue(key = "", value = kv[0])
                         }
-                    }
-                    ?: emptyList()
+                    }.orEmpty()
             return NativeRtpCodecCapability(
                 name = name,
                 kind = kind,

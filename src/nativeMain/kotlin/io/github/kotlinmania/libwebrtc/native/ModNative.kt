@@ -147,7 +147,7 @@ internal actual object WebrtcNativeBridge {
             if (iceRestart) 1 else 0,
             if (offerAudio) 1 else 0,
             if (offerVideo) 1 else 0,
-        )?.toKString() ?: ""
+        )?.toKString().orEmpty()
 
     actual fun pcCreateAnswerSdp(
         pcHandle: Long,
@@ -160,7 +160,7 @@ internal actual object WebrtcNativeBridge {
             if (iceRestart) 1 else 0,
             if (offerAudio) 1 else 0,
             if (offerVideo) 1 else 0,
-        )?.toKString() ?: ""
+        )?.toKString().orEmpty()
 
     actual fun pcSetLocalDescription(
         pcHandle: Long,
@@ -462,7 +462,7 @@ internal actual object WebrtcNativeBridge {
     actual fun desktopCapturerSourceTitle(
         sourceType: Int,
         index: Int,
-    ): String = webrtc_desktop_capturer_source_title(sourceType, index)?.toKString() ?: ""
+    ): String = webrtc_desktop_capturer_source_title(sourceType, index)?.toKString().orEmpty()
 
     actual fun desktopCapturerCaptureRgba(
         sourceId: Long,

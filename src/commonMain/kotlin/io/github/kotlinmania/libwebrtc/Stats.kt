@@ -369,11 +369,11 @@ public sealed class RtcStats {
         public val codec: CodecStats =
             CodecStats(
                 payloadType = payloadType.toUInt(),
-                transportId = transportId ?: "",
+                transportId = transportId.orEmpty(),
                 mimeType = mimeType,
                 clockRate = (clockRate ?: 0L).toUInt(),
                 channels = (channels ?: 0).toUInt(),
-                sdpFmtpLine = sdpFmtpLine ?: "",
+                sdpFmtpLine = sdpFmtpLine.orEmpty(),
             ),
     ) : RtcStats()
 
@@ -398,8 +398,8 @@ public sealed class RtcStats {
             RtpStreamStats(
                 ssrc = ssrc.toUInt(),
                 kind = kind,
-                transportId = transportId ?: "",
-                codecId = codecId ?: "",
+                transportId = transportId.orEmpty(),
+                codecId = codecId.orEmpty(),
             ),
         public val received: ReceivedRtpStreamStats =
             ReceivedRtpStreamStats(
@@ -438,8 +438,8 @@ public sealed class RtcStats {
             RtpStreamStats(
                 ssrc = ssrc.toUInt(),
                 kind = kind,
-                transportId = transportId ?: "",
-                codecId = codecId ?: "",
+                transportId = transportId.orEmpty(),
+                codecId = codecId.orEmpty(),
             ),
         public val sent: SentRtpStreamStats =
             SentRtpStreamStats(
@@ -512,8 +512,8 @@ public sealed class RtcStats {
         public val stats: RtcStatsDict = RtcStatsDict(id = id, timestamp = timestampUs),
         public val dataChannel: DataChannelStats =
             DataChannelStats(
-                label = label ?: "",
-                protocol = protocol ?: "",
+                label = label.orEmpty(),
+                protocol = protocol.orEmpty(),
                 dataChannelIdentifier = dataChannelIdentifier ?: 0,
                 state = state,
                 messagesSent = (messagesSent ?: 0L).toULong(),
@@ -547,9 +547,9 @@ public sealed class RtcStats {
                 iceRole = iceRole ?: IceRole.Unknown,
                 dtlsState = dtlsState,
                 iceState = iceState,
-                selectedCandidatePairId = selectedCandidatePairId ?: "",
-                localCertificateId = localCertificateId ?: "",
-                remoteCertificateId = remoteCertificateId ?: "",
+                selectedCandidatePairId = selectedCandidatePairId.orEmpty(),
+                localCertificateId = localCertificateId.orEmpty(),
+                remoteCertificateId = remoteCertificateId.orEmpty(),
                 dtlsRole = dtlsRole ?: DtlsRole.Unknown,
             ),
     ) : RtcStats()
