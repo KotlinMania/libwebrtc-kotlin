@@ -347,7 +347,7 @@ internal class PeerConnection(
         WebrtcNativeBridge.pcAddIceCandidate(
             pcHandle = nativeHandle,
             sdpMid = candidate.sdpMid(),
-            sdpMlineIndex = candidate.sdpMLineIndex(),
+            sdpMlineIndex = candidate.sdpMlineIndex(),
             candidate = candidate.candidate(),
         )
         iceConnState =

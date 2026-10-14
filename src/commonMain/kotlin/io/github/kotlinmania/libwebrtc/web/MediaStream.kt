@@ -17,7 +17,6 @@ package io.github.kotlinmania.libwebrtc.web
 
 import io.github.kotlinmania.libwebrtc.RtcVideoTrack
 import io.github.kotlinmania.libwebrtc.SinkError
-import io.github.kotlinmania.libwebrtc.VideoBuffer
 import io.github.kotlinmania.libwebrtc.VideoBufferType
 import io.github.kotlinmania.libwebrtc.VideoFormatType
 import io.github.kotlinmania.libwebrtc.VideoFrame
@@ -98,26 +97,25 @@ internal class WebGlBuffer(
     private val bufferWidth: Int,
     private val bufferHeight: Int,
     internal val tex: Any = Any(),
-) : VideoFrameBuffer,
-    VideoBuffer {
-    override val width: UInt
+) : VideoFrameBuffer {
+    internal val width: UInt
         get() = bufferWidth.toUInt()
 
-    override val height: UInt
+    internal val height: UInt
         get() = bufferHeight.toUInt()
 
-    override val bufferType: VideoBufferType
+    internal val bufferType: VideoBufferType
         get() = VideoBufferType.WebGl
 
     override fun width(): Int = bufferWidth
 
     override fun height(): Int = bufferHeight
 
-    override fun toI420(): io.github.kotlinmania.libwebrtc.I420Buffer =
+    internal fun toI420(): io.github.kotlinmania.libwebrtc.I420Buffer =
         io.github.kotlinmania.libwebrtc.I420Buffer
             .new(bufferWidth.toUInt(), bufferHeight.toUInt())
 
-    override fun toArgb(
+    internal fun toArgb(
         format: VideoFormatType,
         dst: ByteArray,
         dstStride: UInt,
