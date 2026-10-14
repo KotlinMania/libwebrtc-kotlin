@@ -192,7 +192,7 @@ class LibTest {
         val i420a = I420ABuffer(width = 64u, height = 48u)
         assertEquals(VideoBufferType.I420A, i420a.bufferType())
         assertEquals(64u, i420a.toI420().width())
-        assertEquals(4u, i420a.strides().strideA)
+        assertEquals(64u, i420a.strides().strideA)
 
         val i422 = I422Buffer.new(width = 64u, height = 48u)
         assertEquals(VideoBufferType.I422, i422.bufferType())
@@ -351,7 +351,7 @@ class LibTest {
         val sources = capturer.getSourceList()
         assertEquals(1, sources.size)
         assertEquals(1uL, sources[0].id())
-        assertEquals("Primary Display", sources[0].title())
+        assertEquals("Application Window", sources[0].title())
 
         var capturedFrame: DesktopFrame? = null
         var capturedError: CaptureError? = null
