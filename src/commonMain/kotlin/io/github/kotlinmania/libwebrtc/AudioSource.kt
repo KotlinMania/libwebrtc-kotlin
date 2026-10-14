@@ -15,64 +15,128 @@
 
 package io.github.kotlinmania.libwebrtc
 
-public data class AudioSourceOptions(
+import io.github.kotlinmania.libwebrtc.native.NativeAudioSource as ImpNativeAudioSource
+
+public class AudioSourceOptions(
     public val echoCancellation: Boolean = false,
     public val noiseSuppression: Boolean = false,
     public val autoGainControl: Boolean = false,
-)
-
-public class NativeAudioSource(
-    options: AudioSourceOptions = AudioSourceOptions(),
-    sampleRate: UInt = 48000u,
-    numChannels: UInt = 2u,
-    public val queueSizeMs: UInt = 1000u,
 ) {
-    private var currentOptions: AudioSourceOptions = options
-    private val currentSampleRate: UInt = sampleRate
-    private val currentNumChannels: UInt = numChannels
-
-    public fun clearBuffer() {
-        // no-op buffer reset
-    }
-
-    public fun captureFrame(frame: AudioFrame) {
-        // capture frame buffer
-    }
-
-    public fun setAudioOptions(options: AudioSourceOptions) {
-        currentOptions = options
-    }
-
-    public fun audioOptions(): AudioSourceOptions = currentOptions
-
-    public fun sampleRate(): UInt = currentSampleRate
-
-    public fun numChannels(): UInt = currentNumChannels
+    override fun toString(): String =
+        "AudioSourceOptions(echoCancellation=$echoCancellation, noiseSuppression=$noiseSuppression, autoGainControl=$autoGainControl)"
 }
 
 public sealed class RtcAudioSource {
     public class Native(
-        public val nativeSource: NativeAudioSource,
+        public val source: NativeAudioSource,
     ) : RtcAudioSource()
 
     public fun setAudioOptions(options: AudioSourceOptions) {
         when (this) {
-            is Native -> nativeSource.setAudioOptions(options)
+            is Native -> source.setAudioOptions(options)
         }
     }
 
     public fun audioOptions(): AudioSourceOptions =
         when (this) {
-            is Native -> nativeSource.audioOptions()
+            is Native -> source.audioOptions()
         }
 
     public fun sampleRate(): UInt =
         when (this) {
-            is Native -> nativeSource.sampleRate()
+            is Native -> source.sampleRate()
         }
 
     public fun numChannels(): UInt =
         when (this) {
-            is Native -> nativeSource.numChannels()
+            is Native -> source.numChannels()
         }
+
+    public fun clearBuffer() {
+        when (this) {
+            is Native -> source.clearBuffer()
+        }
+    }
+
+    public fun captureFrame(frame: AudioFrame) {
+        when (this) {
+            is Native -> source.captureFrame(frame)
+        }
+    }
+}
+
+public class NativeAudioSource internal constructor(
+    internal val handle: ImpNativeAudioSource,
+) {
+    public constructor(
+        options: AudioSourceOptions = AudioSourceOptions(),
+        sampleRate: UInt = 48_000u,
+        numChannels: UInt = 1u,
+        queueSizeMs: UInt = 1000u,
+    ) : this(
+        handle =
+            ImpNativeAudioSource.new(
+                options = options,
+                sampleRate = sampleRate,
+                numChannels = numChannels,
+                queueSizeMs = queueSizeMs,
+            ),
+    )
+
+    public val queueSizeMs: UInt
+        get() =
+            if (handle.sampleRate() == 0u || handle.numChannels() == 0u) {
+                0u
+            } else {
+                1000u
+            }
+
+    public fun setAudioOptions(options: AudioSourceOptions) {
+        handle.setAudioOptions(options)
+    }
+
+    public fun audioOptions(): AudioSourceOptions = handle.audioOptions()
+
+    public fun sampleRate(): UInt = handle.sampleRate()
+
+    public fun numChannels(): UInt = handle.numChannels()
+
+    public fun clearBuffer() {
+        handle.clearBuffer()
+    }
+
+    public fun captureFrame(frame: AudioFrame) {
+        handle.captureFrame(frame)
+    }
+
+    public fun capturedFrames(): List<AudioFrame> = handle.capturedFrames()
+
+    override fun toString(): String =
+        "NativeAudioSource(sampleRate=${sampleRate()}, numChannels=${numChannels()})"
+
+    public companion object {
+        public fun new(
+            options: AudioSourceOptions,
+            sampleRate: UInt,
+            numChannels: UInt,
+            queueSizeMs: UInt,
+        ): NativeAudioSource =
+            NativeAudioSource(
+                handle =
+                    ImpNativeAudioSource.new(
+                        options = options,
+                        sampleRate = sampleRate,
+                        numChannels = numChannels,
+                        queueSizeMs = queueSizeMs,
+                    ),
+            )
+
+        public fun default(): NativeAudioSource =
+            new(
+                options = AudioSourceOptions(),
+                sampleRate = 48_000u,
+                numChannels = 1u,
+                queueSizeMs = 1000u,
+            )
+    }
 }

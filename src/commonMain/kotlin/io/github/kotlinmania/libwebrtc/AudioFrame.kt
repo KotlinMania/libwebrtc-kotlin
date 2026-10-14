@@ -31,4 +31,38 @@ public class AudioFrame(
         numChannels = numChannels,
         samplesPerChannel = samplesPerChannel,
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is AudioFrame) return false
+        return sampleRate == other.sampleRate &&
+            numChannels == other.numChannels &&
+            samplesPerChannel == other.samplesPerChannel &&
+            data.contentEquals(other.data)
+    }
+
+    override fun hashCode(): Int {
+        var result = data.contentHashCode()
+        result = 31 * result + sampleRate.hashCode()
+        result = 31 * result + numChannels.hashCode()
+        result = 31 * result + samplesPerChannel.hashCode()
+        return result
+    }
+
+    override fun toString(): String =
+        "AudioFrame(sampleRate=$sampleRate, numChannels=$numChannels, samplesPerChannel=$samplesPerChannel, samples=${data.size})"
+
+    public companion object {
+        public fun new(
+            sampleRate: UInt,
+            numChannels: UInt,
+            samplesPerChannel: UInt,
+        ): AudioFrame =
+            AudioFrame(
+                data = ShortArray((numChannels * samplesPerChannel).toInt()),
+                sampleRate = sampleRate,
+                numChannels = numChannels,
+                samplesPerChannel = samplesPerChannel,
+            )
+    }
 }

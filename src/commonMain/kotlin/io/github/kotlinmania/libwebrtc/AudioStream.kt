@@ -15,23 +15,88 @@
 
 package io.github.kotlinmania.libwebrtc
 
-public data class NativeAudioStreamOptions(
-    public val queueSizeFrames: Int? = 10,
-)
+import io.github.kotlinmania.libwebrtc.native.NativeAudioStream as ImpNativeAudioStream
 
-public class NativeAudioStream(
-    private val audioTrack: RtcAudioTrack,
+public class NativeAudioStreamOptions(
+    public val audioTrack: RtcAudioTrack,
     public val sampleRate: Int,
     public val numChannels: Int,
-    public val options: NativeAudioStreamOptions = NativeAudioStreamOptions(),
-) {
-    private var isClosed: Boolean = false
+    public val queueSizeFrames: Int? = null,
+)
 
-    public fun track(): RtcAudioTrack = audioTrack
+public class NativeAudioStream internal constructor(
+    internal val handle: ImpNativeAudioStream,
+) {
+    private var closedState: Boolean = false
+
+    public constructor(
+        audioTrack: RtcAudioTrack,
+        sampleRate: Int,
+        numChannels: Int,
+    ) : this(
+        handle =
+            ImpNativeAudioStream.new(
+                audioTrack = audioTrack,
+                sampleRate = sampleRate,
+                numChannels = numChannels,
+                queueSizeFrames = null,
+            ),
+    )
+
+    public constructor(options: NativeAudioStreamOptions) : this(
+        handle =
+            ImpNativeAudioStream.new(
+                audioTrack = options.audioTrack,
+                sampleRate = options.sampleRate,
+                numChannels = options.numChannels,
+                queueSizeFrames = options.queueSizeFrames,
+            ),
+    )
+
+    public val sampleRate: Int
+        get() = handle.sampleRate
+
+    public val numChannels: Int
+        get() = handle.numChannels
+
+    public fun track(): RtcAudioTrack = handle.track()
 
     public fun close() {
-        isClosed = true
+        closedState = true
+        handle.close()
     }
 
-    public fun isClosed(): Boolean = isClosed
+    public fun isClosed(): Boolean = closedState || handle.frameQueue.closed
+
+    public fun pollNext(): AudioFrame? = handle.pollNext()
+
+    override fun toString(): String = "NativeAudioStream(track=${track()})"
+
+    public companion object {
+        public fun new(
+            audioTrack: RtcAudioTrack,
+            sampleRate: Int,
+            numChannels: Int,
+        ): NativeAudioStream =
+            NativeAudioStream(
+                handle =
+                    ImpNativeAudioStream.new(
+                        audioTrack = audioTrack,
+                        sampleRate = sampleRate,
+                        numChannels = numChannels,
+                        queueSizeFrames = null,
+                    ),
+            )
+
+        public fun withOptions(options: NativeAudioStreamOptions): NativeAudioStream =
+            NativeAudioStream(
+                handle =
+                    ImpNativeAudioStream.new(
+                        audioTrack = options.audioTrack,
+                        sampleRate = options.sampleRate,
+                        numChannels = options.numChannels,
+                        queueSizeFrames = options.queueSizeFrames,
+                    ),
+            )
+    }
 }

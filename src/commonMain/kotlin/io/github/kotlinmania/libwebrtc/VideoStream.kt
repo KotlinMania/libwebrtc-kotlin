@@ -15,16 +15,29 @@
 
 package io.github.kotlinmania.libwebrtc
 
-public class NativeVideoStream(
-    private val videoTrack: RtcVideoTrack,
-) {
-    private var isClosed: Boolean = false
+import io.github.kotlinmania.libwebrtc.native.NativeVideoStream as ImpNativeVideoStream
 
-    public fun track(): RtcVideoTrack = videoTrack
+public class NativeVideoStream internal constructor(
+    internal val handle: ImpNativeVideoStream,
+) {
+    public constructor(videoTrack: RtcVideoTrack) : this(
+        handle = ImpNativeVideoStream.new(videoTrack),
+    )
+
+    public fun track(): RtcVideoTrack = handle.track()
 
     public fun close() {
-        isClosed = true
+        handle.close()
     }
 
-    public fun isClosed(): Boolean = isClosed
+    public fun isClosed(): Boolean = handle.closed
+
+    public fun pollNext(): VideoFrame? = handle.pollNext()
+
+    override fun toString(): String = "NativeVideoStream(track=${track()})"
+
+    public companion object {
+        public fun new(videoTrack: RtcVideoTrack): NativeVideoStream =
+            NativeVideoStream(handle = ImpNativeVideoStream.new(videoTrack))
+    }
 }

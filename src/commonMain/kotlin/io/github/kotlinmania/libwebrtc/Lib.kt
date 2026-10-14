@@ -1,6 +1,4 @@
 // port-lint: source lib.rs
-package io.github.kotlinmania.libwebrtc
-
 // Copyright 2025 LiveKit, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,69 +13,46 @@ package io.github.kotlinmania.libwebrtc
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Ledger for upstream lib.rs. The file in upstream Rust carries real
-// declarations alongside a long list of module lines and target-gated
-// re-export blocks; per workspace policy a Kotlin source file may not bridge
-// re-exports via central typealiases, and a module root that mixes real code with
-// module declarations is parceled into per-symbol Kotlin files. This file
-// records the upstream order and the migration ledger; the implementation
-// lives in the parceled files below.
-//
-// Parceled per-symbol files in this package share the lib.rs provenance:
-//
-//   MediaType     -> MediaType.kt
-//   RtcErrorType  -> RtcErrorType.kt
-//   RtcError      -> RtcError.kt
-//
-// Upstream selects the backing implementation by platform: WebAssembly uses
-// the web implementation module, and all other targets use the native
-// implementation module.
-// In Kotlin Multiplatform this split is expressed as expect/actual per
-// source set, not as a single inner module alias.
-//
-// Upstream submodule declarations follow in source order. Each will be ported
-// as its own Kotlin file in this package, so the per-module declarations do
-// not require a Kotlin counterpart of their own.
-//   AudioFrame
-//   AudioSource
-//   AudioStream
-//   AudioTrack
-//   DataChannel
-//   DesktopCapturer (macOS, Windows, and Linux)
-//   IceCandidate
-//   MediaStream
-//   MediaStreamTrack
-//   PeerConnection
-//   PeerConnectionFactory
-//   Prelude
-//   RtpParameters
-//   RtpReceiver
-//   RtpSender
-//   RtpTransceiver
-//   SessionDescription
-//   Stats
-//   VideoFrame
-//   VideoSource
-//   VideoStream
-//   VideoTrack
-//
-// Upstream non-wasm re-exports that surface native-only symbols:
-//   NativeCreateRandomUuid
-//   NativeApm
-//   NativeAudioMixer
-//   NativeAudioResampler
-//   NativeFrameCryptor
-//   NativeYuvHelper
-// Per the libwebrtc-kotlin re-export workflow, these will be migrated to
-// direct references at the call site (no central typealias). This file
-// remains the ledger when callers begin to land.
-//
-// Upstream Android-only re-exports:
-//   android implementation symbols
-// Same migration rule: callers reference the original symbol; no central
-// typealias.
-//
-// Callers migrated:
-//   (none yet)
+package io.github.kotlinmania.libwebrtc
+
+import kotlin.experimental.ExperimentalObjCRefinement
+import kotlin.native.HiddenFromObjC
+
+public enum class MediaType {
+    Audio,
+    Video,
+    Data,
+    Unsupported,
+}
+
+public enum class RtcErrorType {
+    Internal,
+    InvalidSdp,
+    InvalidState,
+}
+
+@OptIn(ExperimentalObjCRefinement::class)
+@HiddenFromObjC
+public class RtcError(
+    public val errorType: RtcErrorType,
+    public val rtcMessage: String,
+) : Exception("an RtcError occured: $errorType - $rtcMessage") {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+        other as RtcError
+        if (errorType != other.errorType) return false
+        if (rtcMessage != other.rtcMessage) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = errorType.hashCode()
+        result = 31 * result + rtcMessage.hashCode()
+        return result
+    }
+
+    override fun toString(): String = "RtcError(errorType=$errorType, message=$rtcMessage)"
+}
 
 public object Lib
