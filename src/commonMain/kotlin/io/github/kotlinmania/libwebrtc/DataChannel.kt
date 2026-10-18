@@ -47,8 +47,6 @@ public sealed class DataChannelError(
     ) : DataChannelError("utf-8 error: $reason")
 }
 
-public typealias DataChannelException = DataChannelError
-
 public class DataChannelInit(
     public val ordered: Boolean = true,
     public val maxRetransmitTime: Int? = null,

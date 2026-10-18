@@ -629,29 +629,3 @@ public sealed class RtcStats {
         override val timestampUs: Long = 0L,
     ) : RtcStats()
 }
-
-public typealias RtcCodecStats = RtcStats.Codec
-public typealias RtcInboundRtpStats = RtcStats.InboundRtp
-public typealias RtcOutboundRtpStats = RtcStats.OutboundRtp
-public typealias RtcRemoteInboundRtpStats = RtcStats.RemoteInboundRtp
-public typealias RtcRemoteOutboundRtpStats = RtcStats.RemoteOutboundRtp
-public typealias RtcMediaSourceStats = RtcStats.MediaSource
-public typealias RtcMediaPlayoutStats = RtcStats.MediaPlayout
-public typealias RtcPeerConnectionStats = RtcStats.PeerConnection
-public typealias RtcDataChannelStats = RtcStats.DataChannel
-public typealias RtcTransportStats = RtcStats.Transport
-public typealias RtcCandidatePairStats = RtcStats.CandidatePair
-public typealias RtcLocalCandidateStats = RtcStats.LocalCandidate
-public typealias RtcRemoteCandidateStats = RtcStats.RemoteCandidate
-public typealias RtcCertificateStats = RtcStats.Certificate
-public typealias RtcStreamStats = RtcStats.Stream
-public typealias RtcTrackStats = RtcStats.Track
-
-public typealias InboundRtpStats = RtcStats.InboundRtp
-public typealias OutboundRtpStats = RtcStats.OutboundRtp
-public typealias RemoteInboundRtpStats = RtcStats.RemoteInboundRtp
-public typealias RemoteOutboundRtpStats = RtcStats.RemoteOutboundRtp
-public typealias MediaPlayoutStats = RtcStats.MediaPlayout
-public typealias LocalCandidateStats = RtcStats.LocalCandidate
-public typealias RemoteCandidateStats = RtcStats.RemoteCandidate
-public typealias TrackStats = RtcStats.Track
